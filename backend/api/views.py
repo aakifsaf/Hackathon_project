@@ -93,8 +93,35 @@ class CareerAssessmentView(APIView):
         predefined_interests = ["Technology", "Artificial Intelligence", "Art", "Marketing", "Finance", "Healthcare", "Education", "Environment", "Sports", "Music"]
         predefined_goals = ["Become a Data Scientist", "Start a Business", "Work in Marketing", "Develop AI Solutions", "Create Art", "Teach Students", "Improve Healthcare", "Protect the Environment", "Become a Leader", "Master a Skill"]
 
+<<<<<<< HEAD
         # Generate questions based on predefined conditions
         quiz_questions = []
+=======
+<<<<<<< HEAD
+        payload = {
+            "model": "deepseek-chat-model",
+            "messages": [{"role": "user", "content": prompt}],
+        }
+
+        headers = {
+            "Authorization": "Bearer sk-0516fa8f321f4facb36f9bdf27e4e69b",
+            "Content-Type": "application/json"
+        }
+
+=======
+>>>>>>> 1b98fa6430b89f4706f138a626c96d4fc5900d8d
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-4.1",
+                messages=[{"role": "user", "content": prompt}]
+            )
+            message = response['choices'][0]['message']['content']
+            return Response({'questions': message}, status=status.HTTP_200_OK)
+        except openai.OpenAIError as e:
+            return Response({'error': f"OpenAI API error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+>>>>>>> 9b106e2f447cb80042ae18fbd502bbecd724a842
 
         for skill in skills:
             if skill in predefined_skills:
