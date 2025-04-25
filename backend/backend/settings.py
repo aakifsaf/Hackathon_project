@@ -133,3 +133,4 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
 }
+DEEPSEEK_API_KEY ="sk-010930edc5944506b735da9aa4239b83"
