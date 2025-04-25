@@ -5,6 +5,9 @@ from django.contrib.auth import authenticate
 from .models import *
 from .serializers import RegisterSerializer
 import openai
+from rest_framework.views import APIView
+from rest_framework import status
+from .serializers import ProfileSerializer, SkillSelfAssessmentSerializer
 
 @api_view(['POST'])
 def register(request):
@@ -63,3 +66,19 @@ def interview_prep(request):
         messages=[{"role": "user", "content": prompt}]
     )
     return Response({'questions': response['choices'][0]['message']['content']})
+
+class UserDetailsView(APIView):
+    def post(self, request):
+        profile_serializer = ProfileSerializer(data=request.data.get('profile', {}))
+        skill_serializer = SkillSelfAssessmentSerializer(data=request.data.get('skills', {}))
+
+        if profile_serializer.is_valid() and skill_serializer.is_valid():
+            profile_serializer.save(user=request.user)
+            skill_serializer.save(user=request.user)
+            return Response({"message": "User details saved successfully."}, status=status.HTTP_201_CREATED)
+
+        errors = {
+            "profile_errors": profile_serializer.errors,
+            "skill_errors": skill_serializer.errors
+        }
+        return Response(errors, status=status.HTTP_400_BAD_REQUEST)

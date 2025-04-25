@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Profile, SkillAssessment, CourseRecommendation
+from .models import User, Profile, SkillAssessment, CourseRecommendation, SkillSelfAssessment
 
 class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
@@ -14,4 +14,9 @@ class RegisterSerializer(serializers.ModelSerializer):
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = '__all__'
+        fields = ['degree', 'year_of_study', 'institution', 'graduation_year', 'career_interests', 'areas_of_interest']
+
+class SkillSelfAssessmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SkillSelfAssessment
+        fields = ['programming', 'communication', 'problem_solving', 'design_thinking']
