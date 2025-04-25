@@ -1,20 +1,20 @@
 from rest_framework import serializers
-from .models import User, Profile, SkillAssessment, CourseRecommendation, SkillSelfAssessment
+from .models import Profile, SkillAssessment, CourseRecommendation, SkillSelfAssessment
 
 class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
-        fields = ('username', 'email', 'password', 'career_goal')
+        model = Profile
+        fields = ('username', 'email', 'password')
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
-        user = User.objects.create_user(**validated_data)
+        user = Profile.objects.create_user(**validated_data)
         return user
 
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ['degree', 'year_of_study', 'institution', 'graduation_year', 'career_interests', 'areas_of_interest']
+        fields = ['id', 'username', 'email', 'full_name', 'age', 'highest_education', 'skills', 'areas_of_interest', 'career_goals']
 
 class SkillSelfAssessmentSerializer(serializers.ModelSerializer):
     class Meta:
