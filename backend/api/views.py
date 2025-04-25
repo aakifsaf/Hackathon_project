@@ -88,7 +88,6 @@ class CareerAssessmentView(APIView):
         if not skills or not interests or not career_goals:
             return Response({'error': 'Skills, interests, and career goals are required.'}, status=status.HTTP_400_BAD_REQUEST)
 
-<<<<<<< HEAD
         # Predefined skills, interests, and goals for generating questions
         predefined_skills = ["Programming", "Problem Solving", "Data Analysis", "Creativity", "Communication", "Graphic Design", "Leadership", "Teamwork", "Critical Thinking", "Time Management"]
         predefined_interests = ["Technology", "Artificial Intelligence", "Art", "Marketing", "Finance", "Healthcare", "Education", "Environment", "Sports", "Music"]
@@ -104,26 +103,6 @@ class CareerAssessmentView(APIView):
         for interest in interests:
             if interest in predefined_interests:
                 quiz_questions.append(f"How does your interest in {interest} shape your career aspirations?")
-=======
-        prompt = (
-            f"Based on the following details, suggest career assessment questions:\n"
-            f"Skills: {skills}\n"
-            f"Interests: {interests}\n"
-            f"Career Goals: {career_goals}"
-        )
-
-        try:
-            response = openai.ChatCompletion.create(
-                model="gpt-4.1",
-                messages=[{"role": "user", "content": prompt}]
-            )
-            message = response['choices'][0]['message']['content']
-            return Response({'questions': message}, status=status.HTTP_200_OK)
-        except openai.OpenAIError as e:
-            return Response({'error': f"OpenAI API error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
->>>>>>> 1b98fa6430b89f4706f138a626c96d4fc5900d8d
 
         for goal in career_goals:
             if goal in predefined_goals:
