@@ -16,10 +16,18 @@ function RegisterPage() {
         email,
         password,
       });
+
+      const { access_token, refresh_token } = response.data;
+      if (!access_token || !refresh_token) {
+        throw new Error('Tokens not received.');
+      }
+
+      localStorage.setItem('access_token', access_token);
+      localStorage.setItem('refresh_token', refresh_token);
       alert('Registration successful! Redirecting to login page.');
       navigate('/login');
     } catch (error) {
-      alert('Registration failed: ' + error.response.data.error);
+      alert('Registration failed: ' + (error.response?.data?.error || error.message));
     }
   };
 

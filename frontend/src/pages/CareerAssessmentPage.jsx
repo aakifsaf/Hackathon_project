@@ -5,9 +5,10 @@ function CareerAssessmentPage() {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [answers, setAnswers] = useState({});
 
   useEffect(() => {
-    const fetchQuestions = async () => {
+    const fetchAssessmentQuestions = async () => {
       try {
         const token = localStorage.getItem('access_token');
         if (!token) {
@@ -16,49 +17,113 @@ function CareerAssessmentPage() {
           return;
         }
 
-        const response = await axios.post('http://127.0.0.1:8000/api/career-assess/', {
-          skills: localStorage.getItem('skills'),
-          interests: localStorage.getItem('interests'),
-          career_goals: localStorage.getItem('career_goals'),
-        }, {
+        // Step 1: Fetch skills, interests, and goals from profile API
+        const profileResponse = await axios.get('http://127.0.0.1:8000/api/user/details/', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
-        setQuestions(response.data.questions);
+        const { skills, interests, career_goals } = profileResponse.data;
+
+        if (!skills?.length || !interests?.length || !career_goals?.length) {
+          setError('Please update your profile with skills, interests, and career goals.');
+          setLoading(false);
+          return;
+        }
+
+        // Step 2: Post them to the career assessment API
+        const assessmentResponse = await axios.post(
+          'http://127.0.0.1:8000/api/career-assess/',
+          { skills, interests, career_goals },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        // Step 3: Parse stringified JSON list in `questions`
+        const rawText = assessmentResponse.data.questions;
+        const extracted = rawText.match(/\[\s*("[^"]+",?\s*)+\]/s);
+        const parsedQuestions = extracted ? JSON.parse(extracted[0]) : [];
+
+        setQuestions(parsedQuestions);
       } catch (err) {
-        setError('Failed to fetch questions. Please try again later.');
+        console.error(err);
+        setError('Failed to load assessment questions.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchQuestions();
+    fetchAssessmentQuestions();
   }, []);
 
+  const handleInputChange = (event, index) => {
+    setAnswers({
+      ...answers,
+      [index]: event.target.value,
+    });
+  };
+
+  const handleSubmit = () => {
+    console.log('Submitted answers:', answers);
+    // You can send the answers to the backend if required here
+  };
+
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen w-screen bg-gradient-to-r from-green-500 to-blue-600">
+        <div className="bg-white shadow-2xl rounded-lg py-4 px-6 w-full max-w-xl text-black text-center">
+          <div className="flex justify-center mb-4">
+            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-600 border-solid"></div>
+          </div>
+          <p className="text-gray-600">Loading career assessment questions...</p>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div>{error}</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen w-screen bg-gradient-to-r from-green-500 to-blue-600">
+        <div className="bg-white shadow-2xl rounded-lg py-4 px-6 w-full max-w-xl text-black text-center">
+          <p className="text-red-500">{error}</p>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="flex items-center justify-center min-h-screen w-screen bg-gradient-to-r from-green-500 to-blue-600">
-      <div className="bg-white shadow-2xl rounded-lg py-4 px-6 sm:py-4 sm:px-8 md:py-4 md:px-10 w-full max-w-xl text-black">
+      <div className="bg-white shadow-2xl rounded-lg py-4 px-6 sm:py-6 sm:px-10 w-full max-w-3xl text-black">
         <h1 className="text-4xl font-extrabold text-center text-gray-800 mb-6">Career Assessment</h1>
         <p className="text-center text-gray-600 mb-8">
-          Based on your skills, interests, and career goals, here are some questions to guide your career planning.
+          Here are questions to reflect on based on your profile.
         </p>
-        <ul className="space-y-4">
+        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-6">
           {questions.map((question, index) => (
-            <li key={index} className="text-gray-800 text-lg">
-              {index + 1}. {question}
-            </li>
+            <div key={index} className="flex flex-col">
+              <label htmlFor={`question-${index}`} className="text-gray-800 text-lg font-semibold">
+                {index + 1}. {question}
+              </label>
+              <textarea
+                id={`question-${index}`}
+                className="mt-2 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                rows={4}
+                value={answers[index] || ''}
+                onChange={(event) => handleInputChange(event, index)}
+                placeholder="Your answer here..."
+              />
+            </div>
           ))}
-        </ul>
+          <div className="text-center mt-6">
+            <button type="submit" className="bg-blue-600 text-white py-2 px-6 rounded-lg">
+              Submit Answers
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

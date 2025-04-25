@@ -11,7 +11,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 import requests
 import json
 from django.conf import settings
+import logging
 
+logger = logging.getLogger(__name__)
 
 class RegisterView(APIView):
     def post(self, request):
@@ -62,6 +64,11 @@ class CareerAssessmentView(APIView):
         skills = request.data.get('skills')
         interests = request.data.get('interests')
         career_goals = request.data.get('career_goals')
+
+        # Log the incoming data for debugging
+        logger.debug(f"Received skills: {skills}")
+        logger.debug(f"Received interests: {interests}")
+        logger.debug(f"Received career goals: {career_goals}")
 
         if not skills or not interests or not career_goals:
             return Response({'error': 'Skills, interests, and career goals are required'}, status=status.HTTP_400_BAD_REQUEST)

@@ -6,7 +6,7 @@ class Profile(AbstractUser):
     age = models.PositiveIntegerField(null=True, blank=True)
     highest_education = models.CharField(max_length=100, blank=True)
     skills = models.JSONField(default=list)
-    areas_of_interest = models.JSONField(default=list)
+    interests = models.JSONField(default=list)
     career_goals = models.JSONField(default=list)
 
     class Meta:
