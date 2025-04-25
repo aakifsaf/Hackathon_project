@@ -5,31 +5,24 @@ from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from .models import GroupMessage
 from .serializers import RegisterSerializer, ProfileSerializer
-# import openai
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework_simplejwt.tokens import RefreshToken
 import requests
+import json
 from django.conf import settings
-import openai
-
-openai.api_key = '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'
 
 
 class RegisterView(APIView):
     def post(self, request):
-        # Deserialize the data into the RegisterSerializer
         serializer = RegisterSerializer(data=request.data)
         
-        # Validate and save the user if valid
         if serializer.is_valid():
             user = serializer.save()  # Save the new user
             
-            # Generate JWT token after user creation
             refresh = RefreshToken.for_user(user)  # Create a refresh token
             access_token = str(refresh.access_token)  # Create an access token
 
-            # Send the access token as a response
             return Response(
                 {'access_token': access_token, 'refresh_token': str(refresh)},
                 status=status.HTTP_201_CREATED
@@ -53,7 +46,6 @@ class LoginView(APIView):
             refresh = RefreshToken.for_user(user)  # Create a refresh token
             access_token = str(refresh.access_token)  # Create an access token
 
-            # Return the access and refresh tokens
             return Response(
                 {'access_token': access_token, 'refresh_token': str(refresh)},
                 status=status.HTTP_200_OK
@@ -66,8 +58,6 @@ class LoginView(APIView):
 
 
 class CareerAssessmentView(APIView):
-    permission_classes = [IsAuthenticated]
-
     def post(self, request):
         skills = request.data.get('skills')
         interests = request.data.get('interests')
@@ -83,18 +73,28 @@ class CareerAssessmentView(APIView):
             f"Career Goals: {career_goals}"
         )
 
+        headers = {
+            "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": "<YOUR_SITE_URL>",
+            "X-Title": "<YOUR_SITE_NAME>"
+        }
+
+        payload = {
+            "model": "deepseek/deepseek-r1-zero:free",
+            "messages": [{"role": "user", "content": prompt}]
+        }
+
         try:
-            response = openai.ChatCompletion.create(
-                model="gpt-4.1",
-                messages=[{"role": "user", "content": prompt}]
-            )
-            message = response['choices'][0]['message']['content']
+            response = requests.post("https://openrouter.ai/api/v1/chat/completions", json=payload, headers=headers)
+            response.raise_for_status()
+            data = response.json()
+            message = data['choices'][0]['message']['content']
             return Response({'questions': message}, status=status.HTTP_200_OK)
-        except openai.OpenAIError as e:
-            return Response({'error': f"OpenAI API error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except requests.exceptions.RequestException as e:
+            return Response({'error': f"OpenRouter API error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 class SkillSubmitView(APIView):
     def post(self, request):
@@ -128,20 +128,33 @@ class InterviewPrepView(APIView):
         role = request.data.get('role')
         if not role:
             return Response({'error': 'Role is required'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         prompt = f"Give 5 mock interview questions for a {role} role."
+
+        headers = {
+            "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": "<YOUR_SITE_URL>",
+            "X-Title": "<YOUR_SITE_NAME>"
+        }
+
+        payload = {
+            "model": "deepseek/deepseek-r1-zero:free",
+            "messages": [{"role": "user", "content": prompt}]
+        }
+
         try:
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=[{"role": "user", "content": prompt}]
-            )
-            questions = response['choices'][0]['message']['content']
+            response = requests.post("https://openrouter.ai/api/v1/chat/completions", json=payload, headers=headers)
+            response.raise_for_status()
+            data = response.json()
+            questions = data['choices'][0]['message']['content']
             return Response({'questions': questions}, status=status.HTTP_200_OK)
-        except openai.OpenAIError as e:
-            return Response({'error': f"OpenAI API error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except requests.exceptions.RequestException as e:
+            return Response({'error': f"OpenRouter API error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except Exception as e:
             return Response({'error': f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+        
+        
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
 

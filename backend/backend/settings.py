@@ -137,3 +137,5 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
 }
+
+OPENROUTER_API_KEY = "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"
