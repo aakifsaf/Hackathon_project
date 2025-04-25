@@ -90,7 +90,7 @@ class CareerAssessmentView(APIView):
         }
 
         headers = {
-            "Authorization": f"Bearer {settings.DEEPSEEK_API_KEY}",
+            "Authorization": "Bearer sk-0516fa8f321f4facb36f9bdf27e4e69b",
             "Content-Type": "application/json"
         }
 
