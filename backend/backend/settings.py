@@ -11,6 +11,10 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+from decouple import config 
+import os
+
+GEMINI_API_KEY = config("GEMINI_API_KEY")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -134,3 +138,8 @@ REST_FRAMEWORK = {
     ],
 }
 DEEPSEEK_API_KEY ="sk-010930edc5944506b735da9aa4239b83"
+
+GOOGLE_CLIENT_ID = os.getenv("949116371516-118d0s23g8i0363k5onr24qnrpo3jv1q.apps.googleusercontent.com") 
+GOOGLE_CLIENT_SECRET = os.getenv("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") 
+GOOGLE_REDIRECT_URI = "http://localhost:8000/redirect" 
+GOOGLE_AUTH_SCOPES = ["https://www.googleapis.com/auth/cloud-platform"]
