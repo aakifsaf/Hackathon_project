@@ -11,6 +11,7 @@ from rest_framework.decorators import api_view
 from rest_framework_simplejwt.tokens import RefreshToken
 import requests
 from django.conf import settings
+<<<<<<< HEAD
 GEMINI_API_KEY="AIzaSyAjHDnGHz6t_drpEeZ2K_UIvl7CIDyGXus"
 import requests
 import logging
@@ -19,6 +20,12 @@ import google.generativeai as genai
 from .utils.google_auth import get_gemini_access_token, list_available_models
 
 logger = logging.getLogger(__name__)
+=======
+import openai
+
+openai.api_key = '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'
+
+>>>>>>> 1b98fa6430b89f4706f138a626c96d4fc5900d8d
 
 class RegisterView(APIView):
     def post(self, request):
@@ -42,21 +49,18 @@ class RegisterView(APIView):
 
 class LoginView(APIView):
     def post(self, request):
-        username = request.data.get('username')  # Get the username from the request
-        password = request.data.get('password')  # Get the password from the request
+        username = request.data.get('username')
+        password = request.data.get('password') 
         
-        # Check if username and password are provided
         if not username or not password:
             return Response(
                 {'error': 'Username and password are required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Authenticate the user
         user = authenticate(username=username, password=password)
         
         if user:
-            # Generate JWT token after authentication
             refresh = RefreshToken.for_user(user)  # Create a refresh token
             access_token = str(refresh.access_token)  # Create an access token
 
@@ -66,7 +70,6 @@ class LoginView(APIView):
                 status=status.HTTP_200_OK
             )
         
-        # Return error if credentials are invalid
         return Response(
             {'error': 'Invalid credentials'},
             status=status.HTTP_401_UNAUTHORIZED
@@ -74,6 +77,8 @@ class LoginView(APIView):
 
 
 class CareerAssessmentView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
         # Extract skills, interests, and career goals from the request
         skills = request.data.get('skills')
@@ -83,6 +88,7 @@ class CareerAssessmentView(APIView):
         if not skills or not interests or not career_goals:
             return Response({'error': 'Skills, interests, and career goals are required.'}, status=status.HTTP_400_BAD_REQUEST)
 
+<<<<<<< HEAD
         # Predefined skills, interests, and goals for generating questions
         predefined_skills = ["Programming", "Problem Solving", "Data Analysis", "Creativity", "Communication", "Graphic Design", "Leadership", "Teamwork", "Critical Thinking", "Time Management"]
         predefined_interests = ["Technology", "Artificial Intelligence", "Art", "Marketing", "Finance", "Healthcare", "Education", "Environment", "Sports", "Music"]
@@ -98,6 +104,26 @@ class CareerAssessmentView(APIView):
         for interest in interests:
             if interest in predefined_interests:
                 quiz_questions.append(f"How does your interest in {interest} shape your career aspirations?")
+=======
+        prompt = (
+            f"Based on the following details, suggest career assessment questions:\n"
+            f"Skills: {skills}\n"
+            f"Interests: {interests}\n"
+            f"Career Goals: {career_goals}"
+        )
+
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-4.1",
+                messages=[{"role": "user", "content": prompt}]
+            )
+            message = response['choices'][0]['message']['content']
+            return Response({'questions': message}, status=status.HTTP_200_OK)
+        except openai.OpenAIError as e:
+            return Response({'error': f"OpenAI API error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+>>>>>>> 1b98fa6430b89f4706f138a626c96d4fc5900d8d
 
         for goal in career_goals:
             if goal in predefined_goals:
@@ -127,7 +153,6 @@ class CareerAssessmentView(APIView):
 
 class SkillSubmitView(APIView):
     def post(self, request):
-        # Placeholder scoring logic
         weak_domains = ['SQL', 'Data Viz']
         courses = [
             {'title': 'SQL for Beginners - Coursera', 'url': 'https://coursera.org/example'}
@@ -190,17 +215,15 @@ class ProfileView(APIView):
 
     def get(self, request):
         try:
-            serializer = ProfileSerializer(request.user.profile)
+            serializer = ProfileSerializer(request.user)
             if not serializer:
                 return Response({'error': 'User profile does not exist'}, status=status.HTTP_404_NOT_FOUND)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        except AttributeError:
-            return Response({'error': 'User profile does not exist'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'error': f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+
     def post(self, request):
-        serializer = ProfileSerializer(request.user.profile, data=request.data, partial=True)
+        serializer = ProfileSerializer(request.user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)

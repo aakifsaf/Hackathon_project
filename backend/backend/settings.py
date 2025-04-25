@@ -31,7 +31,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+CORS_ALLOW_ALL_ORIGINS = True
 
+CORS_ALLOW_CREDENTIALS = True
 # Application definition
 
 INSTALLED_APPS = [
@@ -44,9 +46,11 @@ INSTALLED_APPS = [
     'api',
     'rest_framework',
     'rest_framework_simplejwt',
+    "corsheaders",
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -136,6 +140,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
+<<<<<<< HEAD
 }
 DEEPSEEK_API_KEY ="sk-010930edc5944506b735da9aa4239b83"
 
@@ -143,3 +148,6 @@ GOOGLE_CLIENT_ID = os.getenv("949116371516-118d0s23g8i0363k5onr24qnrpo3jv1q.apps
 GOOGLE_CLIENT_SECRET = os.getenv("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") 
 GOOGLE_REDIRECT_URI = "http://localhost:8000/redirect" 
 GOOGLE_AUTH_SCOPES = ["https://www.googleapis.com/auth/cloud-platform"]
+=======
+}
+>>>>>>> 1b98fa6430b89f4706f138a626c96d4fc5900d8d
