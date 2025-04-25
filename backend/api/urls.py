@@ -1,13 +1,13 @@
 from django.urls import path
 from . import views
-from .views import UserDetailsView
+from .views import UserDetailsView, RegisterView, LoginView, CareerAssessmentView, SkillSubmitView, SendMessageView, InterviewPrepView
 
 urlpatterns = [
-    path('register/', views.register),
-    path('login/', views.login),
-    path('career-assess/', views.career_assessment),
-    path('skill-assess/', views.skill_submit),
-    path('send-message/', views.send_message),
-    path('interview-prep/', views.interview_prep),
+    path('register/', RegisterView.as_view(), name='register'),
+    path('login/', LoginView.as_view(), name='login'),
+    path('career-assess/', CareerAssessmentView.as_view(), name='career-assessment'),
+    path('skill-assess/', SkillSubmitView.as_view(), name='skill-assessment'),
+    path('send-message/', SendMessageView.as_view(), name='send-message'),
+    path('interview-prep/', InterviewPrepView.as_view(), name='interview-prep'),
     path('user/details/', UserDetailsView.as_view(), name='user-details'),
 ]

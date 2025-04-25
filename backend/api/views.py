@@ -56,21 +56,28 @@ class SkillSubmitView(APIView):
         ]
         return Response({'weak_domains': weak_domains, 'courses': courses})
 
-@api_view(['POST'])
-def send_message(request):
-    msg = GroupMessage.objects.create(
-        group_id=request.data['group_id'],
-        sender=request.user,
-        content=request.data['content']
-    )
-    return Response({'status': 'sent'})
+class SendMessageView(APIView):
+    def post(self, request):
+        msg = GroupMessage.objects.create(
+            group_id=request.data['group_id'],
+            sender=request.user,
+            content=request.data['content']
+        )
+        return Response({'status': 'sent'})
 
-@api_view(['POST'])
-def interview_prep(request):
-    role = request.data['role']
-    prompt = f"Give 5 mock interview questions for a {role} role."
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": prompt}]
-    )
-    return Response({'questions': response['choices'][0]['message']['content']})
+class InterviewPrepView(APIView):
+    def post(self, request):
+        role = request.data['role']
+        prompt = f"Give 5 mock interview questions for a {role} role."
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt}]
+        )
+        return Response({'questions': response['choices'][0]['message']['content']})
+
+class UserDetailsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        serializer = ProfileSerializer(request.user.profile)
+        return Response(serializer.data)
