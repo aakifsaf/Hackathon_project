@@ -1,52 +1,60 @@
-from rest_framework.decorators import api_view
+from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
-from .models import *
+from .models import GroupMessage
 from .serializers import RegisterSerializer
 import openai
 from rest_framework.views import APIView
 from rest_framework import status
 from .serializers import ProfileSerializer, SkillSelfAssessmentSerializer
 
-@api_view(['POST'])
-def register(request):
-    serializer = RegisterSerializer(data=request.data)
-    if serializer.is_valid():
-        user = serializer.save()
-        token, created = Token.objects.get_or_create(user=user)
-        return Response({'token': token.key})
-    return Response(serializer.errors)
+class RegisterView(APIView):
+    def post(self, request):
+        serializer = RegisterSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            token, created = Token.objects.get_or_create(user=user)
+            return Response({'token': token.key})
+        return Response(serializer.errors, status=400)
 
-@api_view(['POST'])
-def login(request):
-    username = request.data.get('username')
-    password = request.data.get('password')
-    user = authenticate(username=username, password=password)
-    if user:
-        token, created = Token.objects.get_or_create(user=user)
-        return Response({'token': token.key})
-    return Response({'error': 'Invalid credentials'})
+class LoginView(APIView):
+    def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+        if not username or not password:
+            return Response({'error': 'Username and password are required'}, status=400)
+        user = authenticate(username=username, password=password)
+        if user:
+            token, created = Token.objects.get_or_create(user=user)
+            return Response({'token': token.key})
+        return Response({'error': 'Invalid credentials'}, status=401)
 
-@api_view(['POST'])
-def career_assessment(request):
-    input_data = request.data['answers']
-    prompt = f"Suggest 3 careers based on these interests: {input_data}"
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": prompt}]
-    )
-    careers = response['choices'][0]['message']['content']
-    return Response({'careers': careers})
+class CareerAssessmentView(APIView):
+    def post(self, request):
+        input_data = request.data.get('answers')
+        if not input_data:
+            return Response({'error': 'Answers are required'}, status=400)
+        prompt = f"Suggest 3 careers based on these interests: {input_data}"
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[{"role": "user", "content": prompt}]
+            )
+            careers = response['choices'][0]['message']['content']
+            return Response({'careers': careers})
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
 
-@api_view(['POST'])
-def skill_submit(request):
-    # Placeholder scoring logic
-    weak_domains = ['SQL', 'Data Viz']
-    courses = [
-        {'title': 'SQL for Beginners - Coursera', 'url': 'https://coursera.org/example'}
-    ]
-    return Response({'weak_domains': weak_domains, 'courses': courses})
+class SkillSubmitView(APIView):
+    def post(self, request):
+        # Placeholder scoring logic
+        weak_domains = ['SQL', 'Data Viz']
+        courses = [
+            {'title': 'SQL for Beginners - Coursera', 'url': 'https://coursera.org/example'}
+        ]
+        return Response({'weak_domains': weak_domains, 'courses': courses})
 
 @api_view(['POST'])
 def send_message(request):
@@ -66,19 +74,3 @@ def interview_prep(request):
         messages=[{"role": "user", "content": prompt}]
     )
     return Response({'questions': response['choices'][0]['message']['content']})
-
-class UserDetailsView(APIView):
-    def post(self, request):
-        profile_serializer = ProfileSerializer(data=request.data.get('profile', {}))
-        skill_serializer = SkillSelfAssessmentSerializer(data=request.data.get('skills', {}))
-
-        if profile_serializer.is_valid() and skill_serializer.is_valid():
-            profile_serializer.save(user=request.user)
-            skill_serializer.save(user=request.user)
-            return Response({"message": "User details saved successfully."}, status=status.HTTP_201_CREATED)
-
-        errors = {
-            "profile_errors": profile_serializer.errors,
-            "skill_errors": skill_serializer.errors
-        }
-        return Response(errors, status=status.HTTP_400_BAD_REQUEST)
