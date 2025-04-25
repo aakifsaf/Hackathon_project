@@ -11,6 +11,10 @@ from rest_framework.decorators import api_view
 from rest_framework_simplejwt.tokens import RefreshToken
 import requests
 from django.conf import settings
+import openai
+
+openai.api_key = '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'
+
 
 class RegisterView(APIView):
     def post(self, request):
@@ -34,21 +38,18 @@ class RegisterView(APIView):
 
 class LoginView(APIView):
     def post(self, request):
-        username = request.data.get('username')  # Get the username from the request
-        password = request.data.get('password')  # Get the password from the request
+        username = request.data.get('username')
+        password = request.data.get('password') 
         
-        # Check if username and password are provided
         if not username or not password:
             return Response(
                 {'error': 'Username and password are required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Authenticate the user
         user = authenticate(username=username, password=password)
         
         if user:
-            # Generate JWT token after authentication
             refresh = RefreshToken.for_user(user)  # Create a refresh token
             access_token = str(refresh.access_token)  # Create an access token
 
@@ -58,7 +59,6 @@ class LoginView(APIView):
                 status=status.HTTP_200_OK
             )
         
-        # Return error if credentials are invalid
         return Response(
             {'error': 'Invalid credentials'},
             status=status.HTTP_401_UNAUTHORIZED
@@ -74,7 +74,6 @@ class CareerAssessmentView(APIView):
         if not skills or not interests or not career_goals:
             return Response({'error': 'Skills, interests, and career goals are required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Modify this as per DeepSeek's API structure
         prompt = (
             f"Based on the following details, suggest career assessment questions:\n"
             f"Skills: {skills}\n"
@@ -82,28 +81,21 @@ class CareerAssessmentView(APIView):
             f"Career Goals: {career_goals}"
         )
 
-        payload = {
-            "model": "deepseek-chat-model",
-            "messages": [{"role": "user", "content": prompt}],
-        }
-
-        headers = {
-            "Authorization": f"Bearer {settings.DEEPSEEK_API_KEY}",
-            "Content-Type": "application/json"
-        }
-
         try:
-            response = requests.post("https://api.deepseek.com/v1/chat/completions", json=payload, headers=headers)
-            data = response.json()
-            message = data['choices'][0]['message']['content']
+            response = openai.ChatCompletion.create(
+                model="gpt-4.1",
+                messages=[{"role": "user", "content": prompt}]
+            )
+            message = response['choices'][0]['message']['content']
             return Response({'questions': message}, status=status.HTTP_200_OK)
+        except openai.OpenAIError as e:
+            return Response({'error': f"OpenAI API error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class SkillSubmitView(APIView):
     def post(self, request):
-        # Placeholder scoring logic
         weak_domains = ['SQL', 'Data Viz']
         courses = [
             {'title': 'SQL for Beginners - Coursera', 'url': 'https://coursera.org/example'}
