@@ -126,10 +126,11 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
-AUTH_USER_MODEL = 'api.User'
+AUTH_USER_MODEL = 'api.Profile'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
 }
+DEEPSEEK_API_KEY ="sk-010930edc5944506b735da9aa4239b83"

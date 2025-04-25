@@ -9,7 +9,8 @@ from .serializers import RegisterSerializer, ProfileSerializer
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework_simplejwt.tokens import RefreshToken
-
+import requests
+from django.conf import settings
 
 class RegisterView(APIView):
     def post(self, request):
@@ -62,23 +63,43 @@ class LoginView(APIView):
             {'error': 'Invalid credentials'},
             status=status.HTTP_401_UNAUTHORIZED
         )
+
+
 class CareerAssessmentView(APIView):
     def post(self, request):
-        input_data = request.data.get('answers')
-        if not input_data:
-            return Response({'error': 'Answers are required'}, status=status.HTTP_400_BAD_REQUEST)
-        prompt = f"Suggest 3 careers based on these interests: {input_data}"
+        skills = request.data.get('skills')
+        interests = request.data.get('interests')
+        career_goals = request.data.get('career_goals')
+
+        if not skills or not interests or not career_goals:
+            return Response({'error': 'Skills, interests, and career goals are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Modify this as per DeepSeek's API structure
+        prompt = (
+            f"Based on the following details, suggest career assessment questions:\n"
+            f"Skills: {skills}\n"
+            f"Interests: {interests}\n"
+            f"Career Goals: {career_goals}"
+        )
+
+        payload = {
+            "model": "deepseek-chat-model",
+            "messages": [{"role": "user", "content": prompt}],
+        }
+
+        headers = {
+            "Authorization": f"Bearer {settings.DEEPSEEK_API_KEY}",
+            "Content-Type": "application/json"
+        }
+
         try:
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=[{"role": "user", "content": prompt}]
-            )
-            careers = response['choices'][0]['message']['content']
-            return Response({'careers': careers}, status=status.HTTP_200_OK)
-        except openai.OpenAIError as e:
-            return Response({'error': f"OpenAI API error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            response = requests.post("https://api.deepseek.com/v1/chat/completions", json=payload, headers=headers)
+            data = response.json()
+            message = data['choices'][0]['message']['content']
+            return Response({'questions': message}, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response({'error': f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class SkillSubmitView(APIView):
     def post(self, request):
@@ -127,12 +148,24 @@ class InterviewPrepView(APIView):
         except Exception as e:
             return Response({'error': f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-class UserDetailsView(APIView):
+class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         try:
             serializer = ProfileSerializer(request.user.profile)
+            if not serializer:
+                return Response({'error': 'User profile does not exist'}, status=status.HTTP_404_NOT_FOUND)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except AttributeError:
             return Response({'error': 'User profile does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    def post(self, request):
+        serializer = ProfileSerializer(request.user.profile, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
