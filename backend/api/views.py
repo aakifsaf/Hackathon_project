@@ -5,7 +5,7 @@ from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from .models import GroupMessage
 from .serializers import RegisterSerializer, ProfileSerializer
-import openai
+# import openai
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -66,6 +66,8 @@ class LoginView(APIView):
 
 
 class CareerAssessmentView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
         skills = request.data.get('skills')
         interests = request.data.get('interests')
@@ -140,12 +142,22 @@ class InterviewPrepView(APIView):
         except Exception as e:
             return Response({'error': f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-class UserDetailsView(APIView):
+class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         try:
-            serializer = ProfileSerializer(request.user.profile)
+            serializer = ProfileSerializer(request.user)
+            if not serializer:
+                return Response({'error': 'User profile does not exist'}, status=status.HTTP_404_NOT_FOUND)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        except AttributeError:
-            return Response({'error': 'User profile does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def post(self, request):
+        serializer = ProfileSerializer(request.user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
