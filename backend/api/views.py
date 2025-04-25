@@ -11,7 +11,6 @@ from rest_framework.decorators import api_view
 from rest_framework_simplejwt.tokens import RefreshToken
 import requests
 from django.conf import settings
-<<<<<<< HEAD
 GEMINI_API_KEY="AIzaSyAjHDnGHz6t_drpEeZ2K_UIvl7CIDyGXus"
 import requests
 import logging
@@ -20,12 +19,6 @@ import google.generativeai as genai
 from .utils.google_auth import get_gemini_access_token, list_available_models
 
 logger = logging.getLogger(__name__)
-=======
-import openai
-
-openai.api_key = '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'
-
->>>>>>> 1b98fa6430b89f4706f138a626c96d4fc5900d8d
 
 class RegisterView(APIView):
     def post(self, request):
@@ -93,35 +86,8 @@ class CareerAssessmentView(APIView):
         predefined_interests = ["Technology", "Artificial Intelligence", "Art", "Marketing", "Finance", "Healthcare", "Education", "Environment", "Sports", "Music"]
         predefined_goals = ["Become a Data Scientist", "Start a Business", "Work in Marketing", "Develop AI Solutions", "Create Art", "Teach Students", "Improve Healthcare", "Protect the Environment", "Become a Leader", "Master a Skill"]
 
-<<<<<<< HEAD
         # Generate questions based on predefined conditions
         quiz_questions = []
-=======
-<<<<<<< HEAD
-        payload = {
-            "model": "deepseek-chat-model",
-            "messages": [{"role": "user", "content": prompt}],
-        }
-
-        headers = {
-            "Authorization": "Bearer sk-0516fa8f321f4facb36f9bdf27e4e69b",
-            "Content-Type": "application/json"
-        }
-
-=======
->>>>>>> 1b98fa6430b89f4706f138a626c96d4fc5900d8d
-        try:
-            response = openai.ChatCompletion.create(
-                model="gpt-4.1",
-                messages=[{"role": "user", "content": prompt}]
-            )
-            message = response['choices'][0]['message']['content']
-            return Response({'questions': message}, status=status.HTTP_200_OK)
-        except openai.OpenAIError as e:
-            return Response({'error': f"OpenAI API error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
->>>>>>> 9b106e2f447cb80042ae18fbd502bbecd724a842
 
         for skill in skills:
             if skill in predefined_skills:
