@@ -11,7 +11,17 @@ from rest_framework_simplejwt.tokens import RefreshToken
 import requests
 import json
 from django.conf import settings
+<<<<<<< HEAD
+=======
+GEMINI_API_KEY="AIzaSyAjHDnGHz6t_drpEeZ2K_UIvl7CIDyGXus"
+import requests
+import logging
+import json
+import google.generativeai as genai
+from .utils.google_auth import get_gemini_access_token, list_available_models
+>>>>>>> 5c271791d97ecf46c057205e903e0075fdb8df7e
 
+logger = logging.getLogger(__name__)
 
 class RegisterView(APIView):
     def post(self, request):
@@ -59,20 +69,20 @@ class LoginView(APIView):
 
 class CareerAssessmentView(APIView):
     def post(self, request):
+        # Extract skills, interests, and career goals from the request
         skills = request.data.get('skills')
         interests = request.data.get('interests')
         career_goals = request.data.get('career_goals')
 
         if not skills or not interests or not career_goals:
-            return Response({'error': 'Skills, interests, and career goals are required'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Skills, interests, and career goals are required.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        prompt = (
-            f"Based on the following details, suggest career assessment questions:\n"
-            f"Skills: {skills}\n"
-            f"Interests: {interests}\n"
-            f"Career Goals: {career_goals}"
-        )
+        # Predefined skills, interests, and goals for generating questions
+        predefined_skills = ["Programming", "Problem Solving", "Data Analysis", "Creativity", "Communication", "Graphic Design", "Leadership", "Teamwork", "Critical Thinking", "Time Management"]
+        predefined_interests = ["Technology", "Artificial Intelligence", "Art", "Marketing", "Finance", "Healthcare", "Education", "Environment", "Sports", "Music"]
+        predefined_goals = ["Become a Data Scientist", "Start a Business", "Work in Marketing", "Develop AI Solutions", "Create Art", "Teach Students", "Improve Healthcare", "Protect the Environment", "Become a Leader", "Master a Skill"]
 
+<<<<<<< HEAD
         headers = {
             "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
             "Content-Type": "application/json",
@@ -96,6 +106,45 @@ class CareerAssessmentView(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+=======
+        # Generate questions based on predefined conditions
+        quiz_questions = []
+
+        for skill in skills:
+            if skill in predefined_skills:
+                quiz_questions.append(f"How do you apply your skill in {skill} to real-world scenarios?")
+
+        for interest in interests:
+            if interest in predefined_interests:
+                quiz_questions.append(f"How does your interest in {interest} shape your career aspirations?")
+
+        for goal in career_goals:
+            if goal in predefined_goals:
+                quiz_questions.append(f"What steps are you taking to achieve your goal of {goal}?")
+
+        # Add 10 additional predefined questions for deeper analysis
+        additional_questions = [
+            "What are your top three strengths in your current skillset?",
+            "What motivates you the most in your career?",
+            "How do you prefer to learn new skills (e.g., online courses, hands-on experience, mentorship)?",
+            "What challenges have you faced in achieving your career goals, and how did you overcome them?",
+            "How do you prioritize tasks when working on multiple projects?",
+            "What type of work environment do you thrive in (e.g., collaborative, independent, fast-paced)?",
+            "How do you measure success in your professional life?",
+            "What is your preferred method of problem-solving (e.g., analytical, creative, collaborative)?",
+            "How do you stay updated with trends and advancements in your field of interest?",
+            "What is one skill or area you would like to improve in the next six months?"
+        ]
+
+        quiz_questions.extend(additional_questions)
+
+        # Ensure the total number of questions is 10
+        while len(quiz_questions) < 10:
+            quiz_questions.append("What additional skills, interests, or goals would you like to explore?")
+
+        return Response({"quiz_questions": quiz_questions[:10]}, status=status.HTTP_200_OK)
+
+>>>>>>> 5c271791d97ecf46c057205e903e0075fdb8df7e
 class SkillSubmitView(APIView):
     def post(self, request):
         weak_domains = ['SQL', 'Data Viz']
@@ -144,6 +193,7 @@ class InterviewPrepView(APIView):
         }
 
         try:
+<<<<<<< HEAD
             response = requests.post("https://openrouter.ai/api/v1/chat/completions", json=payload, headers=headers)
             response.raise_for_status()
             data = response.json()
@@ -151,6 +201,29 @@ class InterviewPrepView(APIView):
             return Response({'questions': questions}, status=status.HTTP_200_OK)
         except requests.exceptions.RequestException as e:
             return Response({'error': f"OpenRouter API error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+=======
+            payload = {
+                "prompt": prompt,
+                "model": "gemini-chat-model",
+                "max_tokens": 150
+            }
+            headers = {
+                "Authorization": f"Bearer {GEMINI_API_KEY}",
+                "Content-Type": "application/json"
+            }
+            response = requests.post("https://api.gemini.com/v1/chat/completions", json=payload, headers=headers)
+            response_data = response.json()
+
+            # Debugging: Log the response to understand its structure
+            if not response.ok:
+                return Response({'error': f"Gemini API error: {response_data.get('error', 'Unknown error')}"}, status=response.status_code)
+
+            # Extract questions from the Gemini AI response
+            questions = response_data.get('data', {}).get('questions', 'No questions available')
+            return Response({'questions': questions}, status=status.HTTP_200_OK)
+        except requests.RequestException as e:
+            return Response({'error': f"Gemini API error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+>>>>>>> 5c271791d97ecf46c057205e903e0075fdb8df7e
         except Exception as e:
             return Response({'error': f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
