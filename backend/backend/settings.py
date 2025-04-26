@@ -143,8 +143,15 @@ REST_FRAMEWORK = {
     ],
 }
 
-<<<<<<< HEAD
 OPENROUTER_API_KEY = "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"
-=======
-OPENROUTER_API_KEY = "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"
->>>>>>> 6515f11077ce7d0dcbc64d0114cd96bb4b94019c
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=7),  # Change to whatever duration you want
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": False,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+}

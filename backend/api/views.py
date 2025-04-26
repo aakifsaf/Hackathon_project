@@ -11,10 +11,7 @@ import requests
 import json
 from django.conf import settings
 import logging
-<<<<<<< HEAD
 from transformers import AutoTokenizer, pipeline
-=======
->>>>>>> 6515f11077ce7d0dcbc64d0114cd96bb4b94019c
 
 logger = logging.getLogger(__name__)
 
@@ -68,20 +65,23 @@ class CareerAssessmentView(APIView):
         interests = request.data.get('interests')
         career_goals = request.data.get('career_goals')
 
+        if not skills or not interests or not career_goals:
+            return Response({'error': 'Skills, interests, and career goals are required'}, status=status.HTTP_400_BAD_REQUEST)
+
         # Log the incoming data for debugging
         logger.debug(f"Received skills: {skills}")
         logger.debug(f"Received interests: {interests}")
         logger.debug(f"Received career goals: {career_goals}")
 
-        if not skills or not interests or not career_goals:
-            return Response({'error': 'Skills, interests, and career goals are required'}, status=status.HTTP_400_BAD_REQUEST)
-
         prompt = (
-            f"Based on the following details, suggest  5 career assessment mcqs with options in bracket:\n"
-            f"Skills: {skills}\n"
-            f"Interests: {interests}\n"
-            f"Career Goals: {career_goals}"
-        )
+    f"As a career counselor AI, based on the following user details, generate 5 realistic and insightful career assessment questions "
+    f"that can help evaluate their self-awareness, motivation, and readiness for a suitable career path:\n\n"
+    f"Skills: {skills}\n"
+    f"Interests: {interests}\n"
+    f"Career Goals: {career_goals}\n\n"
+    f"Ask open-ended or multiple-choice questions that reflect real-world scenarios, challenges, and decisions "
+    f"someone might face while planning or progressing in their career."
+)
 
         headers = {
             "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
@@ -125,11 +125,16 @@ class CareerAssessmentView(APIView):
 
 
 class CareerGuidanceView(APIView):
+    permission_classes = [IsAuthenticated]
     def post(self, request):
         answers = request.data.get('answers')
+        print(f"Received answers: {answers}")
 
-        if not answers or not isinstance(answers, str):
-            return Response({'error': 'Answers are required and must be a string'}, status=status.HTTP_400_BAD_REQUEST)
+        if not answers or not isinstance(answers, dict):
+            return Response({'error': 'Answers are required and must be a dictionary'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Log the incoming data for debugging
+        logger.debug(f"Received answers: {answers}")
 
         try:
             # Use NLP model to analyze the answers and produce a personalized roadmap
@@ -142,99 +147,25 @@ class CareerGuidanceView(APIView):
             return Response({'error': f"Unexpected error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def generate_personalized_roadmap(self, content):
-        """
-        Use an NLP model to analyze the content and generate a personalized roadmap.
-        """
-        tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
-        nlp = pipeline("text-classification", model="distilbert-base-uncased")
+    # Load a text-generation pipeline
+        generator = pipeline("text-generation", model="gpt2")  # using GPT-2 for free, small generation
 
-        # Truncate content to fit within the model's token limit
-        tokens = tokenizer.tokenize(content)
-        truncated_content = tokenizer.convert_tokens_to_string(tokens[:512])
+        # Prepare a custom prompt
+        prompt = (
+            "The user provided these career answers:\n"
+            f"{content}\n"
+            "Based on this, create a personalized 5-step career roadmap for the user to become successful in their chosen career path. "
+            "Focus on suggesting skills to learn, certifications, project ideas, and career advice."
+        )
 
-        analysis = nlp(truncated_content)
+        # Generate roadmap text
+        output = generator(prompt, max_length=300, num_return_sequences=1)
 
-        roadmap = []
-        for item in analysis:
-            label = item['label']
-            score = item['score']
-            roadmap.append({"domain": label, "confidence": score})
+        roadmap_text = output[0]['generated_text']
 
-        return roadmap
+        # Just return the generated text as roadmap
+        return roadmap_text
 
-
-class WeakDomainAndRoadmapView(APIView):
-    def post(self, request):
-        logger.debug("Received request for WeakDomainAndRoadmapView")
-        logger.debug(f"Request data: {request.data}")
-
-        # Validate the 'questions' field in the request
-        questions = request.data.get('questions')
-        if not questions or not isinstance(questions, str):
-            logger.error("Invalid or missing 'questions' field")
-            return Response({'error': 'Questions are required and must be a string'}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            # Identify weak domains dynamically based on the questions provided
-            weak_domains = self.identify_weak_domains(questions)
-            logger.debug(f"Weak domains identified: {weak_domains}")
-
-            if not weak_domains:
-                logger.warning("No weak domains identified")
-                return Response({'message': 'No weak domains identified', 'weak_domains': [], 'roadmap': {}}, status=status.HTTP_200_OK)
-
-            # Generate a personalized roadmap based on weak domains
-            roadmap = self.generate_roadmap(weak_domains)
-            logger.debug(f"Generated roadmap: {roadmap}")
-
-            return Response({'weak_domains': weak_domains, 'roadmap': roadmap}, status=status.HTTP_200_OK)
-
-        except Exception as e:
-            logger.error(f"An error occurred while processing the request: {str(e)}")
-            return Response({'error': f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    def identify_weak_domains(self, questions):
-        """
-        Identify weak domains based on the questions or answers provided.
-        Here you could use keyword matching or more sophisticated NLP techniques.
-        """
-        weak_domains = []
-
-        # Example logic to identify weak domains (you can refine this using NLP techniques)
-        if "SQL" in questions:
-            weak_domains.append('SQL')
-        if "Data Visualization" in questions:
-            weak_domains.append('Data Visualization')
-        if "Machine Learning" in questions:
-            weak_domains.append('Machine Learning')
-        if "Python" in questions:
-            weak_domains.append('Python')
-
-        return weak_domains
-
-    def generate_roadmap(self, weak_domains):
-        """
-        Generate a personalized roadmap based on the identified weak domains.
-        """
-        roadmap = {}
-        for domain in weak_domains:
-            if domain == 'SQL':
-                roadmap[domain] = [
-                    {"title": "SQL for Beginners - Coursera", "url": "https://coursera.org/example"}
-                ]
-            elif domain == 'Data Visualization':
-                roadmap[domain] = [
-                    {"title": "Data Visualization with Tableau - Coursera", "url": "https://coursera.org/example"}
-                ]
-            elif domain == 'Machine Learning':
-                roadmap[domain] = [
-                    {"title": "Machine Learning - Coursera", "url": "https://coursera.org/example"}
-                ]
-            elif domain == 'Python':
-                roadmap[domain] = [
-                    {"title": "Python for Data Science - Coursera", "url": "https://coursera.org/example"}
-                ]
-        return roadmap
 
 class SkillSubmitView(APIView):
     def post(self, request):

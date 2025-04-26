@@ -19,10 +19,26 @@ function CareerAssessmentPage() {
           return;
         }
 
+        // Refresh token logic
+        const refreshToken = localStorage.getItem('refresh_token');
+        if (refreshToken) {
+          try {
+            const refreshResponse = await axios.post('http://127.0.0.1:8000/api/token/refresh/', {
+              refresh: refreshToken,
+            });
+            localStorage.setItem('access_token', refreshResponse.data.access);
+          } catch (refreshError) {
+            console.error('Error refreshing token:', refreshError);
+            alert('Session expired. Please log in again.');
+            window.location.href = '/login';
+            return;
+          }
+        }
+
         // Step 1: Fetch skills, interests, and goals from profile API
         const profileResponse = await axios.get('http://127.0.0.1:8000/api/user/details/', {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
           },
         });
 
@@ -40,7 +56,7 @@ function CareerAssessmentPage() {
           { skills, interests, career_goals },
           {
             headers: {
-              Authorization: `Bearer ${token}`,
+              Authorization: `Bearer ${localStorage.getItem('access_token')}`,
             },
           }
         );
@@ -78,16 +94,35 @@ function CareerAssessmentPage() {
         return;
       }
 
+      // Refresh token logic
+      const refreshToken = localStorage.getItem('refresh_token');
+      if (refreshToken) {
+        try {
+          const refreshResponse = await axios.post('http://127.0.0.1:8000/api/token/refresh/', {
+            refresh: refreshToken,
+          });
+          localStorage.setItem('access_token', refreshResponse.data.access);
+        } catch (refreshError) {
+          console.error('Error refreshing token:', refreshError);
+          alert('Session expired. Please log in again.');
+          window.location.href = '/login';
+          return;
+        }
+      }
+
       // Prepare data to send to the backend
       const payload = {
         questions,
         answers,
       };
 
+      // Save answers to localStorage for use in the next page
+      localStorage.setItem('answers', JSON.stringify(answers));
+
       // Post questions and answers to the backend
       await axios.post('http://127.0.0.1:8000/api/career-guidance/', payload, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
         },
       });
 
