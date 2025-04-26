@@ -11,10 +11,7 @@ import requests
 import json
 from django.conf import settings
 import logging
-<<<<<<< HEAD
 from transformers import AutoTokenizer, pipeline
-=======
->>>>>>> 6515f11077ce7d0dcbc64d0114cd96bb4b94019c
 
 logger = logging.getLogger(__name__)
 
