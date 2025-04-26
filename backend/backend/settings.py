@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     "corsheaders",
+    "channels",
 ]
 
 MIDDLEWARE = [
@@ -139,3 +140,16 @@ REST_FRAMEWORK = {
 }
 
 OPENROUTER_API_KEY = "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"
+
+
+
+
+
+ASGI_APPLICATION = "chatapp.asgi.application"
+
+# In-memory channel layer (for development use only)
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
+}

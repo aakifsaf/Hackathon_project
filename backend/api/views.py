@@ -11,6 +11,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 import requests
 import json
 from django.conf import settings
+import os
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 
 
 class RegisterView(APIView):
@@ -173,4 +176,43 @@ class ProfileView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeepSeekChatBotView(APIView):
+    def post(self, request):
+        user_input = request.data.get('question')
+        if not user_input:
+            return Response({'error': 'Question is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Your OpenRouter API key directly inside views (HARDCODED)
+        api_key = "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"
+
+        # Prepare the payload for DeepSeek model
+        payload = {
+            "model": "deepseek/deepseek-r1-zero:free",
+            "messages": [
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": user_input}
+            ],
+            "stream": False
+        }
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key}"
+        }
+
+        try:
+            response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload)
+            response.raise_for_status()
+            result = response.json()
+            reply = result["choices"][0]["message"]["content"]
+            return Response({'answer': reply}, status=status.HTTP_200_OK)
+
+        except requests.exceptions.RequestException as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 

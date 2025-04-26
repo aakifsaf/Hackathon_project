@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 from .views import ProfileView, RegisterView, LoginView, CareerAssessmentView, SkillSubmitView, SendMessageView, InterviewPrepView
 from rest_framework_simplejwt.views import TokenRefreshView
+from .views import DeepSeekChatBotView
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
@@ -12,4 +13,5 @@ urlpatterns = [
     path('interview-prep/', InterviewPrepView.as_view(), name='interview-prep'),
     path('user/details/', ProfileView.as_view(), name='user-details'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('chatbot/', DeepSeekChatBotView.as_view(), name='chatbot'),
 ]
