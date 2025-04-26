@@ -74,7 +74,7 @@ class CareerAssessmentView(APIView):
             return Response({'error': 'Skills, interests, and career goals are required'}, status=status.HTTP_400_BAD_REQUEST)
 
         prompt = (
-            f"Based on the following details, suggest career assessment questions:\n"
+            f"Based on the following details, suggest  5 career assessment mcqs with options in bracket:\n"
             f"Skills: {skills}\n"
             f"Interests: {interests}\n"
             f"Career Goals: {career_goals}"

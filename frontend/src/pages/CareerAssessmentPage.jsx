@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 function CareerAssessmentPage() {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [answers, setAnswers] = useState({});
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchAssessmentQuestions = async () => {
@@ -67,9 +69,34 @@ function CareerAssessmentPage() {
     });
   };
 
-  const handleSubmit = () => {
-    console.log('Submitted answers:', answers);
-    // You can send the answers to the backend if required here
+  const handleSubmit = async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        alert('You are not logged in. Please log in to continue.');
+        window.location.href = '/login';
+        return;
+      }
+
+      // Prepare data to send to the backend
+      const payload = {
+        questions,
+        answers,
+      };
+
+      // Post questions and answers to the backend
+      await axios.post('http://127.0.0.1:8000/api/career-guidance/', payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      // Redirect to the Career Guidance page
+      navigate('/career-guidance');
+    } catch (error) {
+      console.error('Error submitting answers:', error);
+      alert('Failed to submit answers. Please try again later.');
+    }
   };
 
   if (loading) {

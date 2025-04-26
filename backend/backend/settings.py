@@ -82,8 +82,13 @@ WSGI_APPLICATION = "backend.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "career_db",
+        "USER": "postgres",
+        "PASSWORD": "450506",
+        "HOST": "localhost",
+        "PORT": 5432
+        
     }
 }
 
@@ -138,4 +143,4 @@ REST_FRAMEWORK = {
     ],
 }
 
-OPENROUTER_API_KEY = "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"
+OPENROUTER_API_KEY = "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"
