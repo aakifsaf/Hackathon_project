@@ -1,7 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from .models import GroupMessage
 from .serializers import RegisterSerializer, ProfileSerializer
@@ -11,7 +10,10 @@ from rest_framework_simplejwt.tokens import RefreshToken
 import requests
 import json
 from django.conf import settings
+import logging
+from transformers import AutoTokenizer, pipeline
 
+logger = logging.getLogger(__name__)
 
 class RegisterView(APIView):
     def post(self, request):
@@ -76,25 +78,155 @@ class CareerAssessmentView(APIView):
         headers = {
             "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
             "Content-Type": "application/json",
-            "HTTP-Referer": "<YOUR_SITE_URL>",
-            "X-Title": "<YOUR_SITE_NAME>"
         }
 
         payload = {
-            "model": "deepseek/deepseek-r1-zero:free",
+            "model": "deepseek/deepseek-r1-zero:free",  # Ensure the model name is correct
             "messages": [{"role": "user", "content": prompt}]
         }
 
         try:
+            logger.info("Sending request to OpenRouter API")
+            logger.debug(f"Payload: {json.dumps(payload, indent=2)}")
+            logger.debug(f"Headers: {headers}")
+
             response = requests.post("https://openrouter.ai/api/v1/chat/completions", json=payload, headers=headers)
-            response.raise_for_status()
+            response.raise_for_status()  # Raise exception for invalid response codes
+
             data = response.json()
-            message = data['choices'][0]['message']['content']
-            return Response({'questions': message}, status=status.HTTP_200_OK)
+            print(f"Response from OpenRouter API: {data}")
+
+            if 'choices' not in data or not data['choices']:
+                logger.error("Invalid response structure from OpenRouter API")
+                return Response({'error': 'Invalid response from OpenRouter API'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            content = data['choices'][0]['message']['content']
+
+            return Response({'questions': content}, status=status.HTTP_200_OK)
+
+        except requests.exceptions.HTTPError as e:
+            logger.error(f"HTTP error from OpenRouter API: {str(e)}")
+            logger.error(f"Response content: {response.text}")
+            return Response({'error': f"HTTP error from OpenRouter API: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except requests.exceptions.RequestException as e:
-            return Response({'error': f"OpenRouter API error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.error(f"Request error: {str(e)}")
+            return Response({'error': f"Request error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.error(f"Unexpected error: {str(e)}")
+            return Response({'error': f"Unexpected error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CareerGuidanceView(APIView):
+    def post(self, request):
+        answers = request.data.get('answers')
+
+        if not answers or not isinstance(answers, str):
+            return Response({'error': 'Answers are required and must be a string'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Use NLP model to analyze the answers and produce a personalized roadmap
+            roadmap = self.generate_personalized_roadmap(answers)
+
+            return Response({'roadmap': roadmap}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.error(f"Unexpected error: {str(e)}")
+            return Response({'error': f"Unexpected error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def generate_personalized_roadmap(self, content):
+        """
+        Use an NLP model to analyze the content and generate a personalized roadmap.
+        """
+        tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
+        nlp = pipeline("text-classification", model="distilbert-base-uncased")
+
+        # Truncate content to fit within the model's token limit
+        tokens = tokenizer.tokenize(content)
+        truncated_content = tokenizer.convert_tokens_to_string(tokens[:512])
+
+        analysis = nlp(truncated_content)
+
+        roadmap = []
+        for item in analysis:
+            label = item['label']
+            score = item['score']
+            roadmap.append({"domain": label, "confidence": score})
+
+        return roadmap
+
+
+class WeakDomainAndRoadmapView(APIView):
+    def post(self, request):
+        logger.debug("Received request for WeakDomainAndRoadmapView")
+        logger.debug(f"Request data: {request.data}")
+
+        # Validate the 'questions' field in the request
+        questions = request.data.get('questions')
+        if not questions or not isinstance(questions, str):
+            logger.error("Invalid or missing 'questions' field")
+            return Response({'error': 'Questions are required and must be a string'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Identify weak domains dynamically based on the questions provided
+            weak_domains = self.identify_weak_domains(questions)
+            logger.debug(f"Weak domains identified: {weak_domains}")
+
+            if not weak_domains:
+                logger.warning("No weak domains identified")
+                return Response({'message': 'No weak domains identified', 'weak_domains': [], 'roadmap': {}}, status=status.HTTP_200_OK)
+
+            # Generate a personalized roadmap based on weak domains
+            roadmap = self.generate_roadmap(weak_domains)
+            logger.debug(f"Generated roadmap: {roadmap}")
+
+            return Response({'weak_domains': weak_domains, 'roadmap': roadmap}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.error(f"An error occurred while processing the request: {str(e)}")
+            return Response({'error': f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def identify_weak_domains(self, questions):
+        """
+        Identify weak domains based on the questions or answers provided.
+        Here you could use keyword matching or more sophisticated NLP techniques.
+        """
+        weak_domains = []
+
+        # Example logic to identify weak domains (you can refine this using NLP techniques)
+        if "SQL" in questions:
+            weak_domains.append('SQL')
+        if "Data Visualization" in questions:
+            weak_domains.append('Data Visualization')
+        if "Machine Learning" in questions:
+            weak_domains.append('Machine Learning')
+        if "Python" in questions:
+            weak_domains.append('Python')
+
+        return weak_domains
+
+    def generate_roadmap(self, weak_domains):
+        """
+        Generate a personalized roadmap based on the identified weak domains.
+        """
+        roadmap = {}
+        for domain in weak_domains:
+            if domain == 'SQL':
+                roadmap[domain] = [
+                    {"title": "SQL for Beginners - Coursera", "url": "https://coursera.org/example"}
+                ]
+            elif domain == 'Data Visualization':
+                roadmap[domain] = [
+                    {"title": "Data Visualization with Tableau - Coursera", "url": "https://coursera.org/example"}
+                ]
+            elif domain == 'Machine Learning':
+                roadmap[domain] = [
+                    {"title": "Machine Learning - Coursera", "url": "https://coursera.org/example"}
+                ]
+            elif domain == 'Python':
+                roadmap[domain] = [
+                    {"title": "Python for Data Science - Coursera", "url": "https://coursera.org/example"}
+                ]
+        return roadmap
 
 class SkillSubmitView(APIView):
     def post(self, request):
