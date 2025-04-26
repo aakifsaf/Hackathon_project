@@ -144,7 +144,6 @@ REST_FRAMEWORK = {
     ],
 }
 
-<<<<<<< HEAD
 OPENROUTER_API_KEY = "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"
 
 
@@ -158,7 +157,7 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels.layers.InMemoryChannelLayer"
     }
-=======
+}
 OPENROUTER_API_KEY = "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"
 
 from datetime import timedelta
@@ -170,5 +169,4 @@ SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION": False,
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
->>>>>>> 922ac51b356420efc7861b38e8b32cfa9959bdb9
 }

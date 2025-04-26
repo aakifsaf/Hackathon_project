@@ -12,11 +12,8 @@ urlpatterns = [
     path('send-message/', SendMessageView.as_view(), name='send-message'),
     path('interview-prep/', InterviewPrepView.as_view(), name='interview-prep'),
     path('user/details/', ProfileView.as_view(), name='user-details'),
-<<<<<<< HEAD
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('chatbot/', DeepSeekChatBotView.as_view(), name='chatbot'),
-=======
     path('career-guidance/', CareerGuidanceView.as_view(), name='career-guidance'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
->>>>>>> 922ac51b356420efc7861b38e8b32cfa9959bdb9
 ]

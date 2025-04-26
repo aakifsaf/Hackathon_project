@@ -10,14 +10,11 @@ from rest_framework_simplejwt.tokens import RefreshToken
 import requests
 import json
 from django.conf import settings
-<<<<<<< HEAD
 import os
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-=======
 import logging
 from transformers import AutoTokenizer, pipeline
->>>>>>> 922ac51b356420efc7861b38e8b32cfa9959bdb9
 
 logger = logging.getLogger(__name__)
 
