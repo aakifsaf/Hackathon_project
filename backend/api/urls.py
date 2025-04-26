@@ -12,5 +12,5 @@ urlpatterns = [
     path('interview-prep/', InterviewPrepView.as_view(), name='interview-prep'),
     path('user/details/', ProfileView.as_view(), name='user-details'),
     path('career-guidance/', CareerGuidanceView.as_view(), name='career-guidance'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]

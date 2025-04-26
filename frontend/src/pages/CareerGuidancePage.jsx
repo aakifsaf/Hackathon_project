@@ -18,9 +18,9 @@ function CareerGuidancePage() {
           return;
         }
 
-        // Retrieve answers from localStorage
-        const answers = JSON.parse(localStorage.getItem('answers') || '[]');
-        if (!answers.length) {
+        // Retrieve answers from localStorage (expecting an object)
+        const answers = JSON.parse(localStorage.getItem('answers') || '{}');
+        if (!Object.keys(answers).length) {
           alert('No answers found. Please complete the assessment first.');
           navigate('/career-assess');
           return;
@@ -66,42 +66,50 @@ function CareerGuidancePage() {
         </p>
         {recommendations && (
           <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">Recommended Career Paths</h2>
-              <ul className="list-disc pl-5 space-y-2">
-                {recommendations.careerPaths.map((path, index) => (
-                  <li key={index} className="text-gray-800 text-lg">{path}</li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">Specific Roadmaps</h2>
-              <ul className="list-disc pl-5 space-y-2">
-                {recommendations.roadmaps.map((roadmap, index) => (
-                  <li key={index} className="text-gray-800 text-lg">{roadmap}</li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">Recommended Skills</h2>
-              <ul className="list-disc pl-5 space-y-2">
-                {recommendations.skills.map((skill, index) => (
-                  <li key={index} className="text-gray-800 text-lg">{skill}</li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">Resources</h2>
-              <ul className="list-disc pl-5 space-y-2">
-                {recommendations.resources.map((resource, index) => (
-                  <li key={index} className="text-gray-800 text-lg">
-                    <a href={resource.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                      {resource.title}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {recommendations.careerPaths && recommendations.careerPaths.length > 0 && (
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800 mb-4">Recommended Career Paths</h2>
+                <ul className="list-disc pl-5 space-y-2">
+                  {recommendations.careerPaths.map((path, index) => (
+                    <li key={index} className="text-gray-800 text-lg">{path}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {recommendations.roadmaps && recommendations.roadmaps.length > 0 && (
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800 mb-4">Specific Roadmaps</h2>
+                <ul className="list-disc pl-5 space-y-2">
+                  {recommendations.roadmaps.map((roadmap, index) => (
+                    <li key={index} className="text-gray-800 text-lg">{roadmap}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {recommendations.skills && recommendations.skills.length > 0 && (
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800 mb-4">Recommended Skills</h2>
+                <ul className="list-disc pl-5 space-y-2">
+                  {recommendations.skills.map((skill, index) => (
+                    <li key={index} className="text-gray-800 text-lg">{skill}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {recommendations.resources && recommendations.resources.length > 0 && (
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800 mb-4">Resources</h2>
+                <ul className="list-disc pl-5 space-y-2">
+                  {recommendations.resources.map((resource, index) => (
+                    <li key={index} className="text-gray-800 text-lg">
+                      <a href={resource.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                        {resource.title}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         )}
       </div>
