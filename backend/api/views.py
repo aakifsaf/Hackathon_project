@@ -11,7 +11,10 @@ import requests
 import json
 from django.conf import settings
 import logging
+<<<<<<< HEAD
 from transformers import AutoTokenizer, pipeline
+=======
+>>>>>>> 6515f11077ce7d0dcbc64d0114cd96bb4b94019c
 
 logger = logging.getLogger(__name__)
 
@@ -65,11 +68,16 @@ class CareerAssessmentView(APIView):
         interests = request.data.get('interests')
         career_goals = request.data.get('career_goals')
 
+        # Log the incoming data for debugging
+        logger.debug(f"Received skills: {skills}")
+        logger.debug(f"Received interests: {interests}")
+        logger.debug(f"Received career goals: {career_goals}")
+
         if not skills or not interests or not career_goals:
             return Response({'error': 'Skills, interests, and career goals are required'}, status=status.HTTP_400_BAD_REQUEST)
 
         prompt = (
-            f"Based on the following details, suggest career assessment questions:\n"
+            f"Based on the following details, suggest  5 career assessment mcqs with options in bracket:\n"
             f"Skills: {skills}\n"
             f"Interests: {interests}\n"
             f"Career Goals: {career_goals}"

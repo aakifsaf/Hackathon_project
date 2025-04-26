@@ -13,9 +13,9 @@ function PersonalDetailsPage() {
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
-    if (!token) {
+    const refreshToken = localStorage.getItem('refresh_token');
+    if (!token || !refreshToken) {
       alert('You are not logged in. Please log in to continue.');
-      window.location.href = '/login';
     }
   }, []);
 

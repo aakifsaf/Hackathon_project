@@ -11,18 +11,19 @@ function LoginPage() {
     e.preventDefault();
     try {
       const response = await axios.post('http://127.0.0.1:8000/api/login/', {
-        username: username, // Use username instead of email
+        username,
         password,
       });
 
-      const { access_token } = response.data;
-      if (!access_token) {
-        throw new Error('No access token received.');
+      const { access_token, refresh_token } = response.data;
+      if (!access_token || !refresh_token) {
+        throw new Error('Tokens not received.');
       }
 
       localStorage.setItem('access_token', access_token);
+      localStorage.setItem('refresh_token', refresh_token);
       alert('Login successful! Redirecting to dashboard.');
-      navigate('/personal-details'); // Redirect to dashboard or desired page
+      navigate('/personal-details');
     } catch (error) {
       alert('Login failed: ' + (error.response?.data?.error || error.message));
     }

@@ -14,7 +14,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ['id', 'username', 'email', 'full_name', 'age', 'highest_education', 'skills', 'areas_of_interest', 'career_goals']
+        fields = ['id', 'username', 'email', 'full_name', 'age', 'highest_education', 'skills', 'interests', 'career_goals']
 
 class SkillSelfAssessmentSerializer(serializers.ModelSerializer):
     class Meta:
