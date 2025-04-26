@@ -13,9 +13,9 @@ function PersonalDetailsPage() {
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
-    if (!token) {
+    const refreshToken = localStorage.getItem('refresh_token');
+    if (!token || !refreshToken) {
       alert('You are not logged in. Please log in to continue.');
-      window.location.href = '/login';
     }
   }, []);
 
@@ -32,7 +32,7 @@ function PersonalDetailsPage() {
         age,
         education,
         skills: skills.split(',').map(skill => skill.trim()),
-        areas_of_interest: interests.split(',').map(interest => interest.trim()),
+        interests: interests.split(',').map(interest => interest.trim()),
         career_goals: goals.split(',').map(goal => goal.trim()),
       }, {
         headers: {

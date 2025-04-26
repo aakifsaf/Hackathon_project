@@ -1,7 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from .models import GroupMessage
 from .serializers import RegisterSerializer, ProfileSerializer
@@ -11,10 +10,16 @@ from rest_framework_simplejwt.tokens import RefreshToken
 import requests
 import json
 from django.conf import settings
+<<<<<<< HEAD
 import os
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+=======
+import logging
+from transformers import AutoTokenizer, pipeline
+>>>>>>> 922ac51b356420efc7861b38e8b32cfa9959bdb9
 
+logger = logging.getLogger(__name__)
 
 class RegisterView(APIView):
     def post(self, request):
@@ -69,35 +74,104 @@ class CareerAssessmentView(APIView):
         if not skills or not interests or not career_goals:
             return Response({'error': 'Skills, interests, and career goals are required'}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Log the incoming data for debugging
+        logger.debug(f"Received skills: {skills}")
+        logger.debug(f"Received interests: {interests}")
+        logger.debug(f"Received career goals: {career_goals}")
+
         prompt = (
-            f"Based on the following details, suggest career assessment questions:\n"
-            f"Skills: {skills}\n"
-            f"Interests: {interests}\n"
-            f"Career Goals: {career_goals}"
-        )
+    f"As a career counselor AI, based on the following user details, generate 5 realistic and insightful career assessment questions "
+    f"that can help evaluate their self-awareness, motivation, and readiness for a suitable career path:\n\n"
+    f"Skills: {skills}\n"
+    f"Interests: {interests}\n"
+    f"Career Goals: {career_goals}\n\n"
+    f"Ask open-ended or multiple-choice questions that reflect real-world scenarios, challenges, and decisions "
+    f"someone might face while planning or progressing in their career."
+)
 
         headers = {
             "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
             "Content-Type": "application/json",
-            "HTTP-Referer": "<YOUR_SITE_URL>",
-            "X-Title": "<YOUR_SITE_NAME>"
         }
 
         payload = {
-            "model": "deepseek/deepseek-r1-zero:free",
+            "model": "deepseek/deepseek-r1-zero:free",  # Ensure the model name is correct
             "messages": [{"role": "user", "content": prompt}]
         }
 
         try:
+            logger.info("Sending request to OpenRouter API")
+            logger.debug(f"Payload: {json.dumps(payload, indent=2)}")
+            logger.debug(f"Headers: {headers}")
+
             response = requests.post("https://openrouter.ai/api/v1/chat/completions", json=payload, headers=headers)
-            response.raise_for_status()
+            response.raise_for_status()  # Raise exception for invalid response codes
+
             data = response.json()
-            message = data['choices'][0]['message']['content']
-            return Response({'questions': message}, status=status.HTTP_200_OK)
+            print(f"Response from OpenRouter API: {data}")
+
+            if 'choices' not in data or not data['choices']:
+                logger.error("Invalid response structure from OpenRouter API")
+                return Response({'error': 'Invalid response from OpenRouter API'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            content = data['choices'][0]['message']['content']
+
+            return Response({'questions': content}, status=status.HTTP_200_OK)
+
+        except requests.exceptions.HTTPError as e:
+            logger.error(f"HTTP error from OpenRouter API: {str(e)}")
+            logger.error(f"Response content: {response.text}")
+            return Response({'error': f"HTTP error from OpenRouter API: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except requests.exceptions.RequestException as e:
-            return Response({'error': f"OpenRouter API error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.error(f"Request error: {str(e)}")
+            return Response({'error': f"Request error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.error(f"Unexpected error: {str(e)}")
+            return Response({'error': f"Unexpected error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CareerGuidanceView(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+        answers = request.data.get('answers')
+        print(f"Received answers: {answers}")
+
+        if not answers or not isinstance(answers, dict):
+            return Response({'error': 'Answers are required and must be a dictionary'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Log the incoming data for debugging
+        logger.debug(f"Received answers: {answers}")
+
+        try:
+            # Use NLP model to analyze the answers and produce a personalized roadmap
+            roadmap = self.generate_personalized_roadmap(answers)
+
+            return Response({'roadmap': roadmap}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.error(f"Unexpected error: {str(e)}")
+            return Response({'error': f"Unexpected error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def generate_personalized_roadmap(self, content):
+    # Load a text-generation pipeline
+        generator = pipeline("text-generation", model="gpt2")  # using GPT-2 for free, small generation
+
+        # Prepare a custom prompt
+        prompt = (
+            "The user provided these career answers:\n"
+            f"{content}\n"
+            "Based on this, create a personalized 5-step career roadmap for the user to become successful in their chosen career path. "
+            "Focus on suggesting skills to learn, certifications, project ideas, and career advice."
+        )
+
+        # Generate roadmap text
+        output = generator(prompt, max_length=300, num_return_sequences=1)
+
+        roadmap_text = output[0]['generated_text']
+
+        # Just return the generated text as roadmap
+        return roadmap_text
+
 
 class SkillSubmitView(APIView):
     def post(self, request):
