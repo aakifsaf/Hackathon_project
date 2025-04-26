@@ -144,8 +144,6 @@ REST_FRAMEWORK = {
 }
 
 OPENROUTER_API_KEY = "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"
-<<<<<<< HEAD
-=======
 
 from datetime import timedelta
 
@@ -157,4 +155,3 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
 }
->>>>>>> e072123b62eef07e56c9c6e07571160f4123bbe6
