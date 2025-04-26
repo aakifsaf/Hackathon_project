@@ -32,7 +32,7 @@ function PersonalDetailsPage() {
         age,
         education,
         skills: skills.split(',').map(skill => skill.trim()),
-        areas_of_interest: interests.split(',').map(interest => interest.trim()),
+        interests: interests.split(',').map(interest => interest.trim()),
         career_goals: goals.split(',').map(goal => goal.trim()),
       }, {
         headers: {
