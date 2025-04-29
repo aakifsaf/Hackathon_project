@@ -4,3 +4,6 @@ django-cors-headers
 djangorestframework-simplejwt
 openai
 psycopg2-binary  # PostgreSQL DB driver
+channels
+transformers
+torch

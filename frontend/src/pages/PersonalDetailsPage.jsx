@@ -28,9 +28,9 @@ function PersonalDetailsPage() {
       }
 
       const response = await axios.post('http://127.0.0.1:8000/api/user/details/', {
-        name,
+        full_name,
         age,
-        education,
+        highest_education,
         skills: skills.split(',').map(skill => skill.trim()),
         interests: interests.split(',').map(interest => interest.trim()),
         career_goals: goals.split(',').map(goal => goal.trim()),

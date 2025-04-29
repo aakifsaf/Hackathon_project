@@ -1,5 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils.timezone import now
+from datetime import timedelta
 
 class Profile(AbstractUser):
     full_name = models.CharField(max_length=255, blank=True)
@@ -40,8 +42,6 @@ class SkillSelfAssessment(models.Model):
     problem_solving = models.CharField(max_length=50, choices=[('Basic', 'Basic'), ('Intermediate', 'Intermediate'), ('Advanced', 'Advanced')], default='Basic')
     design_thinking = models.CharField(max_length=50, choices=[('Basic', 'Basic'), ('Intermediate', 'Intermediate'), ('Advanced', 'Advanced')], default='Basic')
 
-from django.db import models
-
 class WebSocketMessage(models.Model):
     sender = models.CharField(max_length=255)
     recipient = models.CharField(max_length=255, blank=True, null=True)  # Blank for broadcast
@@ -51,12 +51,35 @@ class WebSocketMessage(models.Model):
     def __str__(self):
         return f"Message from {self.sender} to {self.recipient or 'All'}"
 
+class CareerAssessmentQuestion(models.Model):
+    question = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
 
-from django.contrib import admin
-from .models import WebSocketMessage
+    def is_expired(self):
+        return now() > self.created_at + timedelta(days=30)
 
-@admin.register(WebSocketMessage)
-class WebSocketMessageAdmin(admin.ModelAdmin):
-    list_display = ('sender', 'recipient', 'message', 'timestamp')
-    ordering = ('-timestamp',)
+class CareerAssessmentAnswer(models.Model):
+    question = models.ForeignKey(CareerAssessmentQuestion, on_delete=models.CASCADE)
+    user = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    answer = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def is_expired(self):
+        return now() > self.created_at + timedelta(days=30)
+
+class Roadmap(models.Model):
+    user = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class RequiredSkill(models.Model):
+    roadmap = models.ForeignKey(Roadmap, on_delete=models.CASCADE)
+    skill_name = models.CharField(max_length=255)
+
+class Resource(models.Model):
+    roadmap = models.ForeignKey(Roadmap, on_delete=models.CASCADE)
+    title = models.CharField(max_length=255)
+    url = models.URLField()
+
 

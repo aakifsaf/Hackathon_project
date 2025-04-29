@@ -10,7 +10,7 @@ function CareerAssessmentPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchAssessmentQuestions = async () => {
+    const fetchQuestions = async () => {
       try {
         const token = localStorage.getItem('access_token');
         if (!token) {
@@ -19,63 +19,22 @@ function CareerAssessmentPage() {
           return;
         }
 
-        // Refresh token logic
-        const refreshToken = localStorage.getItem('refresh_token');
-        if (refreshToken) {
-          try {
-            const refreshResponse = await axios.post('http://127.0.0.1:8000/api/token/refresh/', {
-              refresh: refreshToken,
-            });
-            localStorage.setItem('access_token', refreshResponse.data.access);
-          } catch (refreshError) {
-            console.error('Error refreshing token:', refreshError);
-            alert('Session expired. Please log in again.');
-            window.location.href = '/login';
-            return;
-          }
-        }
-
-        // Step 1: Fetch skills, interests, and goals from profile API
-        const profileResponse = await axios.get('http://127.0.0.1:8000/api/user/details/', {
+        const response = await axios.get('http://127.0.0.1:8000/api/career-assess/questions/', {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+            Authorization: `Bearer ${token}`,
           },
         });
 
-        const { skills, interests, career_goals } = profileResponse.data;
-
-        if (!skills?.length || !interests?.length || !career_goals?.length) {
-          setError('Please update your profile with skills, interests, and career goals.');
-          setLoading(false);
-          return;
-        }
-
-        // Step 2: Post them to the career assessment API
-        const assessmentResponse = await axios.post(
-          'http://127.0.0.1:8000/api/career-assess/',
-          { skills, interests, career_goals },
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-            },
-          }
-        );
-
-        // Step 3: Parse stringified JSON list in `questions`
-        const rawText = assessmentResponse.data.questions;
-        const extracted = rawText.match(/\[\s*("[^"]+",?\s*)+\]/s);
-        const parsedQuestions = extracted ? JSON.parse(extracted[0]) : [];
-
-        setQuestions(parsedQuestions);
+        setQuestions(response.data.questions);
       } catch (err) {
-        console.error(err);
+        console.error('Error fetching questions:', err);
         setError('Failed to load assessment questions.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAssessmentQuestions();
+    fetchQuestions();
   }, []);
 
   const handleInputChange = (event, index) => {
@@ -94,39 +53,17 @@ function CareerAssessmentPage() {
         return;
       }
 
-      // Refresh token logic
-      const refreshToken = localStorage.getItem('refresh_token');
-      if (refreshToken) {
-        try {
-          const refreshResponse = await axios.post('http://127.0.0.1:8000/api/token/refresh/', {
-            refresh: refreshToken,
-          });
-          localStorage.setItem('access_token', refreshResponse.data.access);
-        } catch (refreshError) {
-          console.error('Error refreshing token:', refreshError);
-          alert('Session expired. Please log in again.');
-          window.location.href = '/login';
-          return;
-        }
-      }
-
-      // Prepare data to send to the backend
       const payload = {
-        questions,
         answers,
       };
 
-      // Save answers to localStorage for use in the next page
-      localStorage.setItem('answers', JSON.stringify(answers));
-
-      // Post questions and answers to the backend
-      await axios.post('http://127.0.0.1:8000/api/career-guidance/', payload, {
+      await axios.post('http://127.0.0.1:8000/api/career-assess/answers/', payload, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
-      // Redirect to the Career Guidance page
+      alert('Answers submitted successfully!');
       navigate('/career-guidance');
     } catch (error) {
       console.error('Error submitting answers:', error);

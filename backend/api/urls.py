@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .views import ProfileView, RegisterView, LoginView, SkillSubmitView, SendMessageView, InterviewPrepView, CareerAssessmentView,CareerGuidanceView
+from .views import ProfileView, RegisterView, LoginView, SkillSubmitView, SendMessageView, InterviewPrepView, CareerAssessmentView,CareerGuidanceView, CareerAssessmentQuestionsView, CareerAssessmentAnswersView
 from rest_framework_simplejwt.views import TokenRefreshView
 from .views import DeepSeekChatBotView
 
@@ -8,6 +8,8 @@ urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
     path('login/', LoginView.as_view(), name='login'),
     path('career-assess/', CareerAssessmentView.as_view(), name='career-assessment'),
+    path('career-assess/questions/', CareerAssessmentQuestionsView.as_view(), name='career-assessment-questions'),
+    path('career-assess/answers/', CareerAssessmentAnswersView.as_view(), name='career-assessment-answers'),
     path('skill-assess/', SkillSubmitView.as_view(), name='skill-assessment'),
     path('send-message/', SendMessageView.as_view(), name='send-message'),
     path('interview-prep/', InterviewPrepView.as_view(), name='interview-prep'),

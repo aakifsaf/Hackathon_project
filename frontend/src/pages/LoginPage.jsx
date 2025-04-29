@@ -10,6 +10,7 @@ function LoginPage() {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
+      // Login API call
       const response = await axios.post('http://127.0.0.1:8000/api/login/', {
         username,
         password,
@@ -20,10 +21,41 @@ function LoginPage() {
         throw new Error('Tokens not received.');
       }
 
+      // Save tokens
       localStorage.setItem('access_token', access_token);
       localStorage.setItem('refresh_token', refresh_token);
-      alert('Login successful! Redirecting to dashboard.');
-      navigate('/personal-details');
+
+      // Get user profile
+      const profileResponse = await axios.get('http://127.0.0.1:8000/api/user/details/', {
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
+      });
+
+      const {
+        full_name,
+        age,
+        highest_education,
+        skills,
+        interests,
+        career_goals,
+      } = profileResponse.data;
+      console.log('Profile data:', profileResponse.data);
+
+      // Check if all personal details are filled
+      const isProfileComplete =
+        full_name &&
+        age &&
+        highest_education &&
+        Array.isArray(skills) && skills.length > 0 &&
+        Array.isArray(interests) && interests.length > 0 &&
+        Array.isArray(career_goals) && career_goals.length > 0;
+
+      if (isProfileComplete) {
+        navigate('/career-guidance');
+      } else {
+        navigate('/personal-details');
+      }
     } catch (error) {
       alert('Login failed: ' + (error.response?.data?.error || error.message));
     }

@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import authenticate
-from .models import GroupMessage
+from .models import GroupMessage, CareerAssessmentQuestion, CareerAssessmentAnswer
 from .serializers import RegisterSerializer, ProfileSerializer
 from rest_framework import status
 from rest_framework.decorators import api_view
@@ -77,14 +77,14 @@ class CareerAssessmentView(APIView):
         logger.debug(f"Received career goals: {career_goals}")
 
         prompt = (
-    f"As a career counselor AI, based on the following user details, generate 5 realistic and insightful career assessment questions "
-    f"that can help evaluate their self-awareness, motivation, and readiness for a suitable career path:\n\n"
-    f"Skills: {skills}\n"
-    f"Interests: {interests}\n"
-    f"Career Goals: {career_goals}\n\n"
-    f"Ask open-ended or multiple-choice questions that reflect real-world scenarios, challenges, and decisions "
-    f"someone might face while planning or progressing in their career."
-)
+            f"As a career counselor AI, based on the following user details, generate 5 realistic and insightful career assessment questions "
+            f"that can help evaluate their self-awareness, motivation, and readiness for a suitable career path:\n\n"
+            f"Skills: {skills}\n"
+            f"Interests: {interests}\n"
+            f"Career Goals: {career_goals}\n\n"
+            f"Ask open-ended or multiple-choice questions that reflect real-world scenarios, challenges, and decisions "
+            f"someone might face while planning or progressing in their career."
+        )
 
         headers = {
             "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
@@ -112,6 +112,11 @@ class CareerAssessmentView(APIView):
                 return Response({'error': 'Invalid response from OpenRouter API'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
             content = data['choices'][0]['message']['content']
+
+            # Clean and save questions to the database
+            questions = [q.strip('- ').strip() for q in content.split('\n') if q.strip()]
+            for question in questions:
+                CareerAssessmentQuestion.objects.create(question=question)
 
             return Response({'questions': content}, status=status.HTTP_200_OK)
 
@@ -284,6 +289,35 @@ class DeepSeekChatBotView(APIView):
 
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CareerAssessmentQuestionsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        questions = CareerAssessmentQuestion.objects.all()
+        serialized_questions = [q.question for q in questions]
+        return Response({'questions': serialized_questions}, status=status.HTTP_200_OK)
+
+class CareerAssessmentAnswersView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        answers = request.data.get('answers', {})
+        user = request.user
+
+        for question_id, answer_text in answers.items():
+            try:
+                question = CareerAssessmentQuestion.objects.get(id=question_id)
+                CareerAssessmentAnswer.objects.create(
+                    question=question,
+                    user=user,
+                    answer=answer_text
+                )
+            except CareerAssessmentQuestion.DoesNotExist:
+                return Response({'error': f'Question with ID {question_id} does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({'message': 'Answers saved successfully.'}, status=status.HTTP_201_CREATED)
 
 
 
