@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './index.css';
 import CareerAssessmentPage from './pages/CareerAssessmentPage';
-import CareerGuidancePage from './pages/CareerGuidancePage';
+import RoadmapDisplayPage from './pages/RoadmapDisplayPage';
 import LoginPage from './pages/LoginPage';
 import PersonalDetailsPage from './pages/PersonalDetailsPage';
 import RegisterPage from './pages/RegisterPage';
@@ -16,7 +16,7 @@ createRoot(document.getElementById('root')).render(
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/career-assess" element={<CareerAssessmentPage />} />
-        <Route path="/career-guidance" element={<CareerGuidancePage />} />
+        <Route path="/career-guidance" element={<RoadmapDisplayPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/personal-details" element={<PersonalDetailsPage />} />
         <Route path="/register" element={<RegisterPage />} />
