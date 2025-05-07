@@ -1,16 +1,25 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+
+// Placeholder for an icon, e.g., from react-icons
+const LoginIcon = () => (
+  <svg className="w-8 h-8 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd"></path></svg>
+);
 
 function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState(''); // For displaying errors in the UI
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+    setError('');
     try {
-      // Login API call
       const response = await axios.post('http://127.0.0.1:8000/api/login/', {
         username,
         password,
@@ -18,14 +27,14 @@ function LoginPage() {
 
       const { access_token, refresh_token } = response.data;
       if (!access_token || !refresh_token) {
-        throw new Error('Tokens not received.');
+        setError('Login failed: Tokens not received.');
+        setIsLoading(false);
+        return;
       }
 
-      // Save tokens
       localStorage.setItem('access_token', access_token);
       localStorage.setItem('refresh_token', refresh_token);
 
-      // Get user profile
       const profileResponse = await axios.get('http://127.0.0.1:8000/api/user/details/', {
         headers: {
           Authorization: `Bearer ${access_token}`,
@@ -40,9 +49,7 @@ function LoginPage() {
         interests,
         career_goals,
       } = profileResponse.data;
-      console.log('Profile data:', profileResponse.data);
 
-      // Check if all personal details are filled
       const isProfileComplete =
         full_name &&
         age &&
@@ -56,80 +63,141 @@ function LoginPage() {
       } else {
         navigate('/personal-details');
       }
-    } catch (error) {
-      alert('Login failed: ' + (error.response?.data?.error || error.message));
+    } catch (err) {
+      setError(err.response?.data?.detail || err.response?.data?.error || 'Login failed. Please check your credentials.');
+      setIsLoading(false);
     }
   };
 
-  return (
-    <div className="flex items-center justify-center h-screen w-screen bg-gradient-to-r from-blue-500 to-purple-600 overflow-hidden">
-      <div className="flex flex-col md:flex-row bg-white shadow-2xl rounded-2xl overflow-hidden max-w-5xl w-full">
-        
-        {/* Left Section */}
-        <div className="md:w-1/2 flex flex-col justify-between p-10 bg-gradient-to-b from-blue-700 to-purple-700 text-white">
-          <div>
-            <h1 className="text-4xl font-extrabold mb-4">Welcome to website!</h1>
-            <p className="text-base mb-8 leading-relaxed">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna.
-            </p>
-            <button className="bg-white text-blue-700 font-bold py-2 px-6 rounded-full hover:bg-gray-200 transition">
-              Read more
-            </button>
-          </div>
-          <div className="flex space-x-6 mt-8 text-sm font-medium">
-            <a href="#" className="hover:underline">Facebook</a>
-            <a href="#" className="hover:underline">Twitter</a>
-            <a href="#" className="hover:underline">Gmail</a>
-          </div>
-        </div>
+  const pageVariants = {
+    initial: { opacity: 0, x: -50 },
+    in: { opacity: 1, x: 0 },
+    out: { opacity: 0, x: 50 },
+  };
 
-        {/* Right Section */}
-        <div className="md:w-1/2 p-10 flex flex-col justify-center text-black">
-          <h2 className="text-3xl font-bold text-gray-800 mb-6">Sign in</h2>
+  const pageTransition = {
+    type: 'tween',
+    ease: 'anticipate',
+    duration: 0.5,
+  };
+
+  return (
+    <motion.div
+      initial="initial"
+      animate="in"
+      exit="out"
+      variants={pageVariants}
+      transition={pageTransition}
+      className="min-h-screen flex bg-gray-50 font-sans"
+    >
+      {/* Left Side - Branding/Illustration */}
+      <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-blue-600 to-indigo-700 items-center justify-center p-0 relative overflow-hidden">
+        <motion.img 
+          initial={{ opacity: 0, scale: 1.1 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2, duration: 0.8, ease: "circOut" }}
+          src="https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" 
+          alt="Login page illustration - professionals collaborating"
+          className="w-full h-full object-cover"
+        />
+        {/* Overlaying a subtle gradient for text legibility if needed, or a logo */}
+        <div className="absolute inset-0 bg-black/20 flex flex-col items-center justify-center p-12 text-center">
+            <Link to="/" className="inline-block mb-8">
+                <h1 className="text-5xl font-bold tracking-tight text-white filter drop-shadow-lg">CareerSphere</h1>
+            </Link>
+            <p className="text-xl max-w-md leading-relaxed text-white/90 filter drop-shadow-md">
+                Welcome back! Sign in to continue your journey towards career excellence.
+            </p>
+        </div>
+      </div>
+
+      {/* Right Side - Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.5, ease: "easeOut" }}
+          className="w-full max-w-md space-y-8"
+        >
+          <div className="text-center lg:text-left">
+            <Link to="/" className="lg:hidden inline-block mb-6 text-3xl font-bold text-blue-600">
+              CareerSphere
+            </Link>
+            <h2 className="text-3xl font-bold text-gray-800 flex items-center justify-center lg:justify-start">
+              <LoginIcon /> 
+              <span className="ml-2">Sign In</span>
+            </h2>
+            <p className="mt-2 text-gray-600">
+              New to CareerSphere?{' '}
+              <Link to="/register" className="font-medium text-blue-600 hover:text-blue-700 transition-colors">
+                Create an account
+              </Link>
+            </p>
+          </div>
+
+          {error && (
+            <motion.div 
+              initial={{opacity: 0, y: -10}}
+              animate={{opacity:1, y:0}}
+              className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-sm"
+              role="alert"
+            >
+              {error}
+            </motion.div>
+          )}
+
           <form onSubmit={handleLogin} className="space-y-6">
-            <div className="flex flex-col">
-              <label htmlFor="username" className="mb-2 text-sm font-medium text-gray-700">Username</label>
+            <div>
+              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+                Username
+              </label>
               <input
                 id="username"
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
-                className="rounded-lg border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-purple-500 transition text-black"
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow shadow-sm text-gray-900"
+                placeholder="your_username"
               />
             </div>
-            <div className="flex flex-col">
-              <label htmlFor="password" className="mb-2 text-sm font-medium text-gray-700">Password</label>
+
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  Password
+                </label>
+                {/* <Link to="/forgot-password" className="text-sm text-blue-600 hover:underline">Forgot password?</Link> */}
+              </div>
               <input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="rounded-lg border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-purple-500 transition text-black"
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow shadow-sm text-gray-900"
+                placeholder="••••••••"
               />
             </div>
+
             <button
               type="submit"
-              className="w-full bg-black text-white py-3 rounded-lg font-semibold hover:bg-gray-900 transition focus:ring-2 focus:ring-purple-500"
+              disabled={isLoading}
+              className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-md hover:shadow-lg 
+                ${isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700'}`}
             >
-              Login
+              {isLoading ? 'Signing In...' : 'Sign In'}
             </button>
           </form>
-
-          <div className="flex justify-between items-center mt-6 text-sm text-gray-600">
-            <a href="#" className="hover:underline">Forgot Password?</a>
-            <p>
-              Need an account?{' '}
-              <a href="/register" className="text-purple-600 hover:underline">
-                Signup here
-              </a>
-            </p>
-          </div>
-        </div>
-
+          
+          <p className="text-center text-sm text-gray-500">
+            By signing in, you agree to our{' '}
+            <Link to="/terms" className="underline hover:text-blue-600">Terms</Link> and{' '}
+            <Link to="/privacy" className="underline hover:text-blue-600">Privacy Policy</Link>.
+          </p>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
