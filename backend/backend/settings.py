@@ -144,7 +144,6 @@ REST_FRAMEWORK = {
     ],
 }
 
-OPENROUTER_API_KEY = "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"
 
 
 
@@ -158,7 +157,7 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels.layers.InMemoryChannelLayer"
     }
 }
-OPENROUTER_API_KEY = "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"
+OPENROUTER_API_KEY = "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"
 
 from datetime import timedelta
 
