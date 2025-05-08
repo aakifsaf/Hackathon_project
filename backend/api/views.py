@@ -95,29 +95,36 @@ class CareerAssessmentView(APIView):
         )
 
         try:
-            client = OpenAI(
-                base_url="https://openrouter.ai/api/v1",
-                api_key=settings.OPENROUTER_API_KEY,
-            )
+            headers = {
+            "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": getattr(settings, "OPENROUTER_REFERRER", ""),
+            "X-Title": getattr(settings, "OPENROUTER_TITLE", "")
+        }
 
-            completion = client.chat.completions.create(
-                model="deepseek/deepseek-chat-v3-0324:free", # Consider updating model if needed
-                messages=[
-                    {"role": "user", "content": prompt}
-                ],
-                extra_headers={
-                    "HTTP-Referer": getattr(settings, 'OPENROUTER_REFERRER', ''),
-                    "X-Title": getattr(settings, 'OPENROUTER_TITLE', ''),
-                },
-                extra_body={}
-            )
-            if not completion or not completion.choices:
-                logger.error(f"OpenRouter API returned invalid response for user {request.user.id}: {completion}")
-                return Response({'error': 'AI service did not return valid choices. Please try again.'},
+            payload = {
+            "model": "deepseek/deepseek-chat-v3-0324:free",
+            "messages": [
+                {"role": "user", "content": prompt}
+            ]
+        }
+
+            response = requests.post("https://openrouter.ai/api/v1/chat/completions", 
+                                 headers=headers, json=payload)
+
+            if response.status_code != 200:
+                logger.error(f"OpenRouter API error for user {request.user.id}: {response.text}")
+                return Response({'error': 'AI service failed to respond properly.'}, 
                                 status=status.HTTP_502_BAD_GATEWAY)
 
-            content = completion.choices[0].message.content
+            data = response.json()
+            if "choices" not in data or not data["choices"]:
+                logger.error(f"OpenRouter returned empty choices for user {request.user.id}: {data}")
+                return Response({'error': 'AI service did not return valid choices. Please try again.'}, 
+                                status=status.HTTP_502_BAD_GATEWAY)
 
+            content = data["choices"][0]["message"]["content"]
+    
             # Clean and parse content
             txt = re.sub(r'\\boxed\{|\}|\{', '', content)
             try:
