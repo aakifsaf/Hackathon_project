@@ -9,10 +9,13 @@ import LoginPage from './pages/LoginPage';
 import PersonalDetailsPage from './pages/PersonalDetailsPage';
 import RegisterPage from './pages/RegisterPage';
 import LandingPage from './pages/LandingPage';
+import Chatbot from './components/Chatbot'; // Import Chatbot
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
+      {/* Chatbot is placed here, inside BrowserRouter but outside Routes, to be global */}
+      <Chatbot /> 
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/career-assess" element={<CareerAssessmentPage />} />

@@ -11,19 +11,23 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import os
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load .env file from BASE_DIR (backend directory)
+load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-rtwnmq_jhap492fg^ml5w$vz0)wsb342ewn13runesjz=08ijs"
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-rtwnmq_jhap492fg^ml5w$vz0)wsb342ewn13runesjz=08ijs')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = []
 
@@ -144,26 +148,13 @@ REST_FRAMEWORK = {
     ],
 }
 
-
-
-
-
-
-ASGI_APPLICATION = "backend.asgi.application"
-
-# In-memory channel layer (for development use only)
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer"
-    }
-}
-OPENROUTER_API_KEY = "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"
+OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY')
 
 from datetime import timedelta
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=7),  # Change to whatever duration you want
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),  # Change to whatever duration you want
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "ROTATE_REFRESH_TOKENS": False,
     "BLACKLIST_AFTER_ROTATION": False,
     "AUTH_HEADER_TYPES": ("Bearer",),

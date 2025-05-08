@@ -162,7 +162,6 @@ class CareerGuidanceView(APIView):
             return Response({'message': 'No career roadmap found for your profile.'}, status=status.HTTP_204_NO_CONTENT)
 
         # Prepare the response with available data
-        # Consider using a serializer here if the model becomes more complex
         data = {
             'roadmap': latest_roadmap.roadmap,
             'skills': latest_roadmap.skills,
@@ -252,7 +251,7 @@ class CareerGuidanceView(APIView):
             # Save the generated content to the database, associated with the user
             roadmap_instance = CareerRoadmap.objects.create(
                 user=user,  # Associate with the logged-in user
-                user_responses=answer_text,
+                user_responses=answer_text, # Reverted to storing formatted string
                 roadmap=roadmap,
                 skills=skills,
                 certifications=certifications,
@@ -354,18 +353,24 @@ class ProfileView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class DeepSeekChatBotView(APIView):
+from django.conf import settings
+
+class ChatBotView(APIView):
+    # permission_classes = [IsAuthenticated] # Removed for guest access
     def post(self, request):
         user_input = request.data.get('question')
+        user = request.user
         if not user_input:
             return Response({'error': 'Question is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Your OpenRouter API key directly inside views (HARDCODED)
-        api_key = "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"
+        # Use API key from settings
+        api_key = settings.OPENROUTER_API_KEY
+        if not api_key:
+            return Response({'error': 'API key not configured'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         # Prepare the payload for DeepSeek model
         payload = {
-            "model": "deepseek/deepseek-r1-zero:free",
+            "model": "deepseek/deepseek-chat-v3-0324:free",
             "messages": [
                 {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "user", "content": user_input}

@@ -42,14 +42,12 @@ class CareerAssessmentAnswer(models.Model):
         return now() > self.created_at + timedelta(days=30)
 
 class CareerRoadmap(models.Model):
-    user = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='career_roadmaps', null=True, blank=True) # Added user
-    user_responses = models.TextField()  # Stores the user's responses in raw format
-    roadmap = models.TextField()  # Stores the generated roadmap
-    skills = models.TextField()  # Stores the required skills
-    certifications = models.TextField()  # Stores the recommended certifications
-    created_at = models.DateTimeField(auto_now_add=True)  # Timestamp when the roadmap is generated
+    user = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='career_roadmaps', null=True, blank=True) # Reverted to Profile model
+    user_responses = models.TextField()  # Reverted to TextField
+    roadmap = models.TextField()  # Reverted to non-nullable
+    skills = models.TextField()  # Reverted to non-nullable
+    certifications = models.TextField()  # Reverted to non-nullable
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Career Roadmap for {self.id}"
-
-
